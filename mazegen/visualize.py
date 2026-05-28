@@ -1,6 +1,7 @@
 """ANSI maze visualization."""
 
 from .shared import DIRECTION_DELTAS, Cell, Edge, Grid
+
 ANSI_RESET = "\033[0m"
 
 ANSI_WALL = "\033[48;2;184;2;44m  "
@@ -138,6 +139,4 @@ def _draw_cell(
         wx = cx + dx
         wy = cy + dy
         neighbor = (x + dx, y + dy)
-        canvas[wy][wx] = (
-            ANSI_PATH if ((x, y), neighbor) in path_edges else ANSI_OPEN
-        )
+        canvas[wy][wx] = ANSI_PATH if ((x, y), neighbor) in path_edges else ANSI_OPEN

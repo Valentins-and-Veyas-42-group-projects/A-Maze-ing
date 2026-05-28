@@ -4,6 +4,7 @@ import random
 import sys
 import time
 
+from .config import Config, parse_config
 from .errors import Err
 from .generator import MazeGenerator
 from .output import format_output
@@ -18,7 +19,29 @@ def random_cell(width: int, height: int) -> Cell:
     return (random.randint(0, width - 1), random.randint(0, height - 1))
 
 
-def _get_maze_input() -> MazeGenerator:
+def _load_config() -> Config | None:
+    """Load an optional config file passed as the first CLI argument."""
+
+    if len(sys.argv) <= 1:
+        return None
+
+    result = parse_config(sys.argv[1])
+    if isinstance(result, Err):
+        result.print_diagnostic()
+        sys.exit(1)
+    return result.value
+
+
+def _get_maze_input(config: Config | None) -> MazeGenerator:
+    if config is not None:
+        return MazeGenerator(
+            config.width,
+            config.height,
+            config.entry,
+            config.exits,
+            config.perfect,
+        )
+
     width = int(input("Maze width: "))
     height = int(input("Maze height: "))
     perfect: bool = input("Is perfect: ").strip().lower() in (
@@ -44,23 +67,31 @@ def _random_wall_color() -> tuple[int, int, int]:
     )
 
 
-def _save_output(mazegen: MazeGenerator) -> None:
-    """Write the maze, endpoints, and path to output.txt."""
+def _save_output(mazegen: MazeGenerator, output_file: str) -> None:
+    """Write the maze, endpoints, and path to an output file."""
 
     result = format_output(mazegen.grid, mazegen.entry, mazegen.exits)
     if isinstance(result, Err):
         print(f"Error compiling layout: {result.error.name}")
         return
-    with open("output.txt", "w") as f:
+    with open(output_file, "w") as f:
         _ = f.write(result)
-    print("Maze layout saved to output.txt")
+    print(f"Maze layout saved to {output_file}")
 
 
-def _build_maze(animation: bool,
-                alge: int) -> tuple[MazeGenerator, set[Cell], set[Edge]]:
+def _build_maze(
+    animation: bool,
+    alge: int,
+    config: Config | None,
+) -> tuple[MazeGenerator, set[Cell], set[Edge]]:
     """Read input, generate, solve, and validate a fresh maze."""
 
-    mazegen = _get_maze_input()
+    if config is not None and config.seed is not None:
+        random.seed(config.seed)
+    mazegen = _get_maze_input(config)
+    wait_time = 0.01
+    if config is not None:
+        wait_time = config.force_wait_time / config.speed
 
     def animate_step() -> None:
         print("\033[?2026h", end="", flush=True)
@@ -68,7 +99,7 @@ def _build_maze(animation: bool,
         visualize(mazegen.grid, entry=mazegen.entry, exits=mazegen.exits,
                   animating=True)
         print("\033[?2026l", end="", flush=True)
-        time.sleep(0.01)
+        time.sleep(wait_time)
     if alge == 1:
         if animation:
             gen_result = mazegen.generate(on_step=animate_step)
@@ -114,16 +145,22 @@ def _print_menu(show_path: bool) -> None:
 
 def main() -> None:
     """Generate a maze, then drive the interactive ANSI viewer."""
-    ani: bool = input("Is Animation: ").strip().lower() in (
-        "true", "1", "yes", "y", "t"
-    )
+    config = _load_config()
+    output_file = config.output_file if config is not None else "output.txt"
+    if config is None:
+        ani: bool = input("Is Animation: ").strip().lower() in (
+            "true", "1", "yes", "y", "t"
+        )
+        alge = int(input("Choose alge. 1 for DFS 2 for bintree"))
+    else:
+        ani = config.animation
+        alge = config.algorithm
     try:
         print("\033[?1049h", end="", flush=True)
-        alge = int(input("Choose alge. 1 for DFS 2 for bintree"))
 
-        mazegen, path_cells, path_edges = _build_maze(ani, alge)
-        show_path = False
-        wall_color: tuple[int, int, int] | None = None
+        mazegen, path_cells, path_edges = _build_maze(ani, alge, config)
+        show_path = config.show_path if config is not None else False
+        wall_color = config.wall_color if config is not None else None
         while True:
             print("\033[2J\033[H", end="")
 
@@ -143,9 +180,9 @@ def main() -> None:
                 case "2":
                     wall_color = _random_wall_color()
                 case "r":
-                    mazegen, path_cells, path_edges = _build_maze(ani, alge)
+                    mazegen, path_cells, path_edges = _build_maze(ani, alge, config)
                 case "s":
-                    _save_output(mazegen)
+                    _save_output(mazegen, output_file)
                 case "q":
                     print("\033[?1049l", end="", flush=True)
                     break

@@ -1,7 +1,7 @@
 """Maze generation."""
 
 import random
-from typing import Callable
+from collections.abc import Callable
 
 from .errors import Err, MazeError, Ok
 from .patterns import Pattern, select_pattern
