@@ -3,6 +3,8 @@ import random
 
 
 class Direction(Enum):
+    """Cardinal directions encoded as bit positions for cell walls."""
+
     NORTH = 0
     EAST = 1
     SOUTH = 2
@@ -18,9 +20,15 @@ Direction_Deltas = {
 
 
 class MazeGenerator:
-    """Maze gen class. pass (width,height)"""
+    """Generate a perfect maze on a grid using randomized DFS.
+
+    Each cell is a 4-bit value where set bits mark intact walls in
+    the order NORTH, EAST, SOUTH, WEST.
+    """
+
     @staticmethod
     def _is_inbounds(x: int, y: int, width: int, height: int) -> bool:
+        """Return True if (x, y) lies within the grid bounds."""
         if 0 <= x < width and 0 <= y < height:
             return True
         else:
@@ -28,6 +36,7 @@ class MazeGenerator:
 
     def __init__(self, width: int, height: int, entry: tuple[int, int],
                  exit: tuple[int, int]) -> None:
+        """Initialize the generator with dimensions and endpoints."""
         self.width = width
         self.height = height
         self.grid: list[list[int]] = []
@@ -35,13 +44,14 @@ class MazeGenerator:
         self.exits = exit
 
     def init_grid(self) -> list[list[int]]:
+        """Build a grid with all walls intact and return it."""
         columns = self.width
         rows = self.height
         self.grid = [[15 for _ in range(columns)]for _ in range(rows)]
         return self.grid
 
     def generate(self) -> None:
-
+        """Carve the maze in place via iterative randomized DFS."""
         array_visited = [[False for _ in range(
             self.width)]for _ in range(self.height)]
         self.init_grid()
@@ -110,7 +120,7 @@ class MazeGenerator:
 
 
 def visualize(grid: list[list[int]]) -> None:
-
+    """Print an ASCII rendering of the maze grid to stdout."""
     rows = len(grid)
     cols = len(grid[0])
     for y in range(rows):
@@ -141,4 +151,5 @@ if __name__ == "__main__":
 
 
 def main() -> None:
+    """Entry point placeholder."""
     pass
