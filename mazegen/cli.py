@@ -53,7 +53,8 @@ def main() -> None:
 
     path_cells, path_edges = path_to_edges(path, mazegen.entry)
     visualize(
-        mazegen.grid, path_cells, path_edges, mazegen.entry, mazegen.exits
+        mazegen.grid, path_cells, path_edges, mazegen.entry, mazegen.exits,
+        set(mazegen.logo_cells)
     )
 
     result = format_output(mazegen.grid, mazegen.entry, mazegen.exits)

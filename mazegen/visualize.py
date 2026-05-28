@@ -1,7 +1,6 @@
 """ANSI maze visualization."""
 
 from .shared import DIRECTION_DELTAS, Cell, Edge, Grid
-
 ANSI_RESET = "\033[0m"
 
 ANSI_WALL = "\033[48;2;245;245;245m  "
@@ -9,6 +8,8 @@ ANSI_OPEN = "\033[48;2;10;10;10m  "
 ANSI_PATH = "\033[48;2;255;200;0m  "
 ANSI_ENTRY = "\033[48;2;0;220;120m  "
 ANSI_EXIT = "\033[48;2;230;30;30m  "
+ANSI_LOGO = "\033[48;2;0;160;255m  "
+ANSI_LOGO_BORDER = "\033[48;2;0;60;130m  "
 
 
 def visualize(
@@ -17,11 +18,13 @@ def visualize(
     path_edges: set[Edge] | None = None,
     entry: Cell | None = None,
     exits: Cell | None = None,
+    logo_cells: set[Cell] | None = None,
 ) -> None:
     """Render maze with ANSI colors."""
 
     path_cells = path_cells or set()
     path_edges = path_edges or set()
+    logo_cells = logo_cells or set()
     rows = len(grid)
     cols = len(grid[0]) if grid else 0
 
@@ -34,13 +37,34 @@ def visualize(
     for y in range(rows):
         for x in range(cols):
             _draw_cell(
-                canvas, grid[y][x], x, y, path_cells, path_edges, entry, exits
+                canvas, grid[y][x], x, y, path_cells, path_edges,
+                entry, exits, logo_cells
             )
 
     _fill_pillars(canvas, rows, cols)
+    _draw_logo_border(canvas, logo_cells)
 
     for row in canvas:
         print("".join(row) + ANSI_RESET)
+
+
+def _draw_logo_border(
+    canvas: list[list[str]], logo_cells: set[Cell]
+) -> None:
+    height = len(canvas)
+    width = len(canvas[0]) if canvas else 0
+    for (x, y) in logo_cells:
+        cx = 2 * x + 1
+        cy = 2 * y + 1
+        for ox in (-1, 0, 1):
+            for oy in (-1, 0, 1):
+                if ox == 0 and oy == 0:
+                    continue
+                wx = cx + ox
+                wy = cy + oy
+                if 0 <= wy < height and 0 <= wx < width:
+                    if canvas[wy][wx] == ANSI_WALL:
+                        canvas[wy][wx] = ANSI_LOGO_BORDER
 
 
 def _fill_pillars(
@@ -73,6 +97,7 @@ def _draw_cell(
     path_edges: set[Edge],
     entry: Cell | None,
     exits: Cell | None,
+    logo_cells: set[Cell],
 ) -> None:
     cx = 2 * x + 1
     cy = 2 * y + 1
@@ -81,6 +106,8 @@ def _draw_cell(
         canvas[cy][cx] = ANSI_ENTRY
     elif (x, y) == exits:
         canvas[cy][cx] = ANSI_EXIT
+    elif (x, y) in logo_cells:
+        canvas[cy][cx] = ANSI_LOGO
     elif (x, y) in path_cells:
         canvas[cy][cx] = ANSI_PATH
     else:

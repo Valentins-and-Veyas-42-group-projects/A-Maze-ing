@@ -3,7 +3,28 @@
 import random
 
 from .errors import Err, MazeError, Ok
-from .shared import DIRECTION_DELTAS, Direction, Grid, is_inbounds
+from .shared import (
+    DIRECTION_DELTAS,
+    Cell,
+    Direction,
+    Grid,
+    is_inbounds,
+)
+
+PATTERN_SMALL = [
+    # 4
+    (0, 0),         (2, 0),
+    (0, 1),         (2, 1),
+    (0, 2), (1, 2), (2, 2),
+    (2, 3),
+    (2, 4),
+    # 2
+    (4, 0), (5, 0), (6, 0),
+    (6, 1),
+    (4, 2), (5, 2), (6, 2),
+    (4, 3),
+    (4, 4), (5, 4), (6, 4),
+]
 
 
 class MazeGenerator:
@@ -29,6 +50,7 @@ class MazeGenerator:
         self.entry = entry
         self.exits = exit
         self.perfect = perfect
+        self.logo_cells: list[Cell] = []
 
     def init_grid(self) -> Grid:
         """Build a grid with all walls intact and return it."""
@@ -76,14 +98,19 @@ class MazeGenerator:
         return result
 
     def add_loops(self) -> None:
+        logo = set(self.logo_cells)
         candidates = []
         for y in range(self.height):
             for x in range(self.width):
-                if x+1 < self.width:
+                if x+1 < self.width and not (
+                    (x, y) in logo or (x + 1, y) in logo
+                ):
                     candidates.append((x, y, Direction.EAST))
-                if y+1 < self.height:
+                if y+1 < self.height and not (
+                    (x, y) in logo or (x, y + 1) in logo
+                ):
                     candidates.append((x, y, Direction.SOUTH))
-        count: int = round(len(candidates)*0.3)
+        count: int = round(len(candidates)*0.25)
         samples = random.sample(candidates, count)
         for (xx, yy, direction) in samples:
             if not self.would_make_open_sqr(xx, yy, direction):
@@ -99,10 +126,21 @@ class MazeGenerator:
         visited = [[False for _ in range(self.width)]
                    for _ in range(self.height)]
         self.init_grid()
+        ox = (self.width - 7) // 2
+        oy = (self.height - 5) // 2
+        potential_cells = [(ox + dx, oy + dy) for (dx, dy) in PATTERN_SMALL]
 
-        stack: list[tuple[int, int]] = [(0, 0)]
-        visited[0][0] = True
-
+        if (self.width > 8 and self.height > 6
+            and self.entry not in potential_cells
+                and self.exits not in potential_cells):
+            self.logo_cells = self.add_42()
+        elif self.width <= 8 and self.height <= 6:
+            print("Maze too small for logo")
+        elif (self.entry in potential_cells
+                or self.exits in potential_cells):
+            print("Entry/Exit would be in Logo")
+        stack: list[tuple[int, int]] = [self.entry]
+        visited[self.entry[1]][self.entry[0]] = True
         while stack:
             x, y = stack[-1]
             candidates: list[tuple[Direction, int, int]] = []
@@ -112,7 +150,8 @@ class MazeGenerator:
                 nx = x + dx
                 ny = y + dy
                 if (is_inbounds(nx, ny, self.width, self.height)
-                        and not visited[ny][nx]):
+                        and not visited[ny][nx]
+                        and (nx, ny)not in self.logo_cells):
                     candidates.append((direction, nx, ny))
 
             if candidates:
@@ -124,6 +163,7 @@ class MazeGenerator:
                 stack.pop()
         if not self.perfect:
             self.add_loops()
+
         return Ok(None)
 
     def _validate(self) -> Ok[None] | Err:
@@ -143,6 +183,15 @@ class MazeGenerator:
         if self.entry == self.exits:
             return Err(MazeError.ENTRY_EXIT_SAME)
         return Ok(None)
+
+    def add_42(self) -> list[tuple[int, int]]:
+        ox = (self.width - 7) // 2
+        oy = (self.height - 5) // 2
+        cells = []
+        for (dx, dy) in PATTERN_SMALL:
+            self.grid[oy + dy][ox + dx] = 15
+            cells.append((ox + dx, oy + dy))
+        return cells
 
     def remove_wall(self, x: int, y: int, direction: Direction) -> None:
         """Remove the wall between cell (x, y) and its neighbor."""

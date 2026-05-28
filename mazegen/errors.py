@@ -15,6 +15,7 @@ class MazeError(Enum):
     INVALID_PATH = auto()
     ENTRY_EXIT_SAME = auto()
     NO_PATH_FOUND = auto()
+    NO_42_LOGO = auto()
 
 
 T = TypeVar("T")
