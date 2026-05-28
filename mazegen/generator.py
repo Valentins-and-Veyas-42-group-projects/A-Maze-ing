@@ -44,29 +44,34 @@ class MazeGenerator:
 
     def _is_open_square(self, top_leftx: int, top_lefty: int) -> bool:
         tlx, tly = top_leftx, top_lefty
-        c1 = (tlx, tly)
-        c2 = (tlx+1, tly)
-        c3 = (tlx, tly+1)
-        c4 = (tlx+1, tly+1)
-        if (not all(is_inbounds(x, y, self.width, self.height)
-                    for (x, y) in [c1, c2, c3, c4])):
+        if not is_inbounds(tlx, tly, self.width, self.height):
             return False
-        if (self._no_wall(*c1, Direction.EAST) and
-            self._no_wall(*c3, Direction.EAST) and
-            self._no_wall(*c1, Direction.SOUTH) and
-                self._no_wall(*c2, Direction.SOUTH)):
-            return True
-        else:
+        if not is_inbounds(tlx + 2, tly + 2, self.width, self.height):
             return False
+        for dy in range(3):
+            for dx in range(2):
+                if not self._no_wall(tlx + dx, tly + dy, Direction.EAST):
+                    return False
+        for dy in range(2):
+            for dx in range(3):
+                if not self._no_wall(tlx + dx, tly + dy, Direction.SOUTH):
+                    return False
+        return True
 
     def would_make_open_sqr(self, x: int, y: int,
                             direction: Direction) -> bool:
         result = False
         self.remove_wall(x, y, direction)
         if direction == Direction.EAST:
-            result = self._is_open_square(x, y-1) or self._is_open_square(x, y)
+            for tlx in (x - 1, x):
+                for tly in (y - 2, y - 1, y):
+                    if self._is_open_square(tlx, tly):
+                        result = True
         elif direction == Direction.SOUTH:
-            result = self._is_open_square(x-1, y) or self._is_open_square(x, y)
+            for tlx in (x - 2, x - 1, x):
+                for tly in (y - 1, y):
+                    if self._is_open_square(tlx, tly):
+                        result = True
         self.add_wall(x, y, direction)
         return result
 
@@ -78,11 +83,11 @@ class MazeGenerator:
                     candidates.append((x, y, Direction.EAST))
                 if y+1 < self.height:
                     candidates.append((x, y, Direction.SOUTH))
-        count: int = round(len(candidates)*0.8)
+        count: int = round(len(candidates)*0.3)
         samples = random.sample(candidates, count)
-        for (xx, yy, direcion) in samples:
-            if not self.would_make_open_sqr(xx, yy, direcion):
-                self.remove_wall(xx, yy, direcion)
+        for (xx, yy, direction) in samples:
+            if not self.would_make_open_sqr(xx, yy, direction):
+                self.remove_wall(xx, yy, direction)
 
     def generate(self) -> Ok[None] | Err:
         """Carve the maze in place via iterative randomized DFS."""

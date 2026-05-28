@@ -37,8 +37,31 @@ def visualize(
                 canvas, grid[y][x], x, y, path_cells, path_edges, entry, exits
             )
 
+    _fill_pillars(canvas, rows, cols)
+
     for row in canvas:
         print("".join(row) + ANSI_RESET)
+
+
+def _fill_pillars(
+    canvas: list[list[str]], rows: int, cols: int
+) -> None:
+    for y in range(rows - 1):
+        for x in range(cols - 1):
+            px = 2 * x + 2
+            py = 2 * y + 2
+            slots = (
+                canvas[py - 1][px],
+                canvas[py + 1][px],
+                canvas[py][px - 1],
+                canvas[py][px + 1],
+            )
+            if any(s == ANSI_WALL for s in slots):
+                continue
+            if all(s == ANSI_PATH for s in slots):
+                canvas[py][px] = ANSI_PATH
+            else:
+                canvas[py][px] = ANSI_OPEN
 
 
 def _draw_cell(

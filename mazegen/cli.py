@@ -22,7 +22,9 @@ def main() -> None:
 
     width = int(input("Enter width: "))
     height = int(input("Enter height: "))
-    perfect: bool = bool(input("Is perfect: "))
+    perfect: bool = input("Is perfect: ").strip().lower() in (
+        "true", "1", "yes", "y", "t"
+    )
 
     entry = random_cell(width, height)
     exit_node = random_cell(width, height)
