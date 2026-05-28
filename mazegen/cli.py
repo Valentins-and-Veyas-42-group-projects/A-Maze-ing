@@ -1,3 +1,4 @@
+"""Command-line maze generator, solver, and ASCII visualizer."""
 from enum import Enum, auto
 import random
 import sys
@@ -32,6 +33,8 @@ direction_to_letter = {
 
 
 class MazeError(Enum):
+    """Enumerate failure modes returned by maze operations."""
+
     INVALID_WIDTH = auto()
     INVALID_HEIGHT = auto()
     INVALID_ENTRY = auto()
@@ -45,11 +48,15 @@ T = TypeVar("T")
 
 @dataclass
 class Ok(Generic[T]):
+    """Wrap a successful result value of type T."""
+
     value: T
 
 
 @dataclass
 class Err:
+    """Wrap a failure result carrying a MazeError variant."""
+
     error: MazeError
 
 
@@ -138,6 +145,12 @@ class MazeGenerator:
         self.grid[y][x] &= ~(1 << (direction.value + 2) % 4)
 
     def solver(self) -> Ok[str] | Err:
+        """Solve the maze with BFS and return directions as a string.
+
+        Each character in the returned string is one of N, E, S, W and
+        marks the next step from the entry toward the exit. Returns Err
+        with NO_PATH_FOUND when the exit is unreachable.
+        """
         (x, y) = self.entry
         array_visited = [[False for _ in range(
             self.width)]for _ in range(self.height)]
@@ -173,6 +186,11 @@ class MazeGenerator:
         return Err(MazeError.NO_PATH_FOUND)
 
     def output(self) -> Err | str:
+        """Format the grid, endpoints, and solved path as text.
+
+        Returns the formatted multi-line string on success, or an Err
+        propagated from the solver on failure.
+        """
         grid_str = "\n".join("".join(format(cell, 'X')
                              for cell in row) for row in self.grid)
         entry_str = f"{self.entry[0]},{self.entry[1]}"
@@ -187,6 +205,7 @@ class MazeGenerator:
 
 
 def path_to_cells(path: str, entry: tuple[int, int]) -> set[tuple[int, int]]:
+    """Return the set of cells traversed by a direction-letter path."""
     letter_to_direction = {v: k for k, v in direction_to_letter.items()}
     cells = set()
     x, y = entry
