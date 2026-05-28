@@ -78,7 +78,7 @@ class MazeGenerator:
                 stack.pop()
 
     def _setup_entry_exit(self) -> None:
-        """Method to make entry and exit points"""
+        """Open the boundary walls at the entry and exit cells."""
         (enx, eny) = self.entry
         (exx, exy) = self.exits
         if (self._is_inbounds(*self.entry, self.width, self.height) and
@@ -111,7 +111,7 @@ class MazeGenerator:
 
     def wall_helper(self, x: int, y: int,
                     direction: Direction) -> None:
-        """Function to handle wall removal logic."""
+        """Remove the wall between cell (x, y) and its neighbor."""
         self.grid[y][x] &= ~(1 << direction.value)
         (dx, dy) = Direction_Deltas[direction]
         x += dx
