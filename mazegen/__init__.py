@@ -1,1 +1,1 @@
-"""mazegen package."""
+import cli

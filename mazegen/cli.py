@@ -1,6 +1,9 @@
-from enum import Enum
+from enum import Enum, auto
 import random
+import sys
 from collections import deque
+from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 
 class Direction(Enum):
@@ -26,6 +29,28 @@ direction_to_letter = {
     Direction.SOUTH: "S",
     Direction.WEST: "W",
 }
+
+
+class MazeError(Enum):
+    INVALID_WIDTH = auto()
+    INVALID_HEIGHT = auto()
+    INVALID_ENTRY = auto()
+    INVALID_EXIT = auto()
+    ENTRY_EXIT_SAME = auto()
+    NO_PATH_FOUND = auto()
+
+
+T = TypeVar("T")
+
+
+@dataclass
+class Ok(Generic[T]):
+    value: T
+
+
+@dataclass
+class Err:
+    error: MazeError
 
 
 class MazeGenerator:
@@ -59,12 +84,14 @@ class MazeGenerator:
         self.grid = [[15 for _ in range(columns)]for _ in range(rows)]
         return self.grid
 
-    def generate(self) -> None:
+    def generate(self) -> Ok[None] | Err:
         """Carve the maze in place via iterative randomized DFS."""
+        check = self._validate()
+        if isinstance(check, Err):
+            return check
         array_visited = [[False for _ in range(
             self.width)]for _ in range(self.height)]
         self.init_grid()
-        self._validate_entry_exit()
         stack = []
         array_visited[0][0] = True
         stack.append((0, 0))
@@ -85,15 +112,21 @@ class MazeGenerator:
                 stack.append((nx, ny))
             else:
                 stack.pop()
+        return Ok(None)
 
-    def _validate_entry_exit(self) -> None:
-        """Validate that entry and exit are distinct in-bounds cells."""
+    def _validate(self) -> Ok[None] | Err:
+        """Validate dimensions and endpoints."""
+        if self.width <= 0:
+            return Err(MazeError.INVALID_WIDTH)
+        if self.height <= 0:
+            return Err(MazeError.INVALID_HEIGHT)
         if not self._is_inbounds(*self.entry, self.width, self.height):
-            raise ValueError(f"entry {self.entry} out of bounds")
+            return Err(MazeError.INVALID_ENTRY)
         if not self._is_inbounds(*self.exits, self.width, self.height):
-            raise ValueError(f"exit {self.exits} out of bounds")
+            return Err(MazeError.INVALID_EXIT)
         if self.entry == self.exits:
-            raise ValueError("entry and exit must differ")
+            return Err(MazeError.ENTRY_EXIT_SAME)
+        return Ok(None)
 
     def wall_helper(self, x: int, y: int,
                     direction: Direction) -> None:
@@ -104,7 +137,7 @@ class MazeGenerator:
         y += dy
         self.grid[y][x] &= ~(1 << (direction.value + 2) % 4)
 
-    def solver(self) -> str:
+    def solver(self) -> Ok[str] | Err:
         (x, y) = self.entry
         array_visited = [[False for _ in range(
             self.width)]for _ in range(self.height)]
@@ -126,18 +159,31 @@ class MazeGenerator:
                 for (px, py), (cx, cy) in zip(path, path[1:]):
                     delta = (cx - px, cy - py)
                     directions.append(delta_to_direction[delta])
-                return "".join(direction_to_letter[d] for d in directions)
+                return Ok("".join(direction_to_letter[d]
+                                  for d in directions))
             for direction in Direction:
                 (dx, dy) = Direction_Deltas[direction]
                 nx = x+dx
                 ny = y+dy
-                if (self._is_inbounds(nx, ny, self.width, self.height)
-                    and not (self.grid[y][x] & (1 << direction.value))
+                if (not (self.grid[y][x] & (1 << direction.value))
                         and not array_visited[ny][nx]):
                     array_visited[ny][nx] = True
                     came_from[(nx, ny)] = (x, y)
                     queue.append((nx, ny))
-        return "".join(direction_to_letter[d] for d in directions)
+        return Err(MazeError.NO_PATH_FOUND)
+
+    def output(self) -> Err | str:
+        grid_str = "\n".join("".join(format(cell, 'X')
+                             for cell in row) for row in self.grid)
+        entry_str = f"{self.entry[0]},{self.entry[1]}"
+        exit_str = f"{self.exits[0]},{self.exits[1]}"
+        result = self.solver()
+
+        if isinstance(result, Ok):
+            path_str = result.value
+        else:
+            return Err(result.error)
+        return f"{grid_str}\n\n{entry_str}\n{exit_str}\n{path_str}\n"
 
 
 def path_to_cells(path: str, entry: tuple[int, int]) -> set[tuple[int, int]]:
@@ -199,21 +245,36 @@ def visualize(grid: list[list[int]],
         print("".join(row))
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point placeholder."""
     width = int(input("Enter width: "))
     height = int(input("Enter height: "))
     entry = (random.randint(0, width-1), random.randint(0, height-1,))
     exit = (random.randint(0, width-1), random.randint(0, height-1,))
     mazegen = MazeGenerator(
         width, height, entry, exit)
-    print(mazegen.entry, mazegen.exits)
-    mazegen.generate()
-    path = mazegen.solver()
+    gen_result = mazegen.generate()
+    if isinstance(gen_result, Err):
+        print(f"generate failed: {gen_result.error.name}")
+        sys.exit(1)
+    solve_result = mazegen.solver()
+    if isinstance(solve_result, Err):
+        print(f"solver failed: {solve_result.error.name}")
+        sys.exit(1)
+    path = solve_result.value
     visualize(mazegen.grid, path_to_cells(path, mazegen.entry),
               mazegen.entry, mazegen.exits)
-    print(path)
+    mazegen.output()
+    print(mazegen.output())
+    result = mazegen.output()
+    output_file = "output.txt"
+    match result:
+        case str(value):
+            with open(output_file, "w")as f:
+                f.write(value)
+        case Err(error):
+            print(f"Error: {error}")
 
 
-def main() -> None:
-    """Entry point placeholder."""
-    pass
+if __name__ == "__main__":
+    main()
