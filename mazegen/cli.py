@@ -18,6 +18,14 @@ Direction_Deltas = {
     Direction.SOUTH: (0, 1),
     Direction.WEST: (-1, 0),
 }
+delta_to_direction = {v: k for k, v in Direction_Deltas.items()}
+
+direction_to_letter = {
+    Direction.NORTH: "N",
+    Direction.EAST: "E",
+    Direction.SOUTH: "S",
+    Direction.WEST: "W",
+}
 
 
 class MazeGenerator:
@@ -56,7 +64,7 @@ class MazeGenerator:
         array_visited = [[False for _ in range(
             self.width)]for _ in range(self.height)]
         self.init_grid()
-        self._setup_entry_exit()
+        self._validate_entry_exit()
         stack = []
         array_visited[0][0] = True
         stack.append((0, 0))
@@ -78,37 +86,14 @@ class MazeGenerator:
             else:
                 stack.pop()
 
-    def _setup_entry_exit(self) -> None:
-        """Open the boundary walls at the entry and exit cells."""
-        (enx, eny) = self.entry
-        (exx, exy) = self.exits
-        if (self._is_inbounds(*self.entry, self.width, self.height) and
-            self._is_inbounds(*self.exits, self.width, self.height) and
-                self.entry != self.exits):
-            match (enx == 0, enx == self.width - 1, eny == 0,
-                    eny == self.height - 1):
-                case (_, _, True, _):
-                    self.grid[eny][enx] &= ~(1 << 0)
-                case (_, _, _, True):
-                    self.grid[eny][enx] &= ~(1 << 2)
-                case (True, _, _, _):
-                    self.grid[eny][enx] &= ~(1 << 3)
-                case (_, True, _, _):
-                    self.grid[eny][enx] &= ~(1 << 1)
-                case(False, False, False, False):
-                    pass  # ERROR HANDLING!!!
-            match (exx == 0, exx == self.width - 1, exy == 0,
-                    exy == self.height - 1):
-                case (_, _, True, _):
-                    self.grid[exy][exx] &= ~(1 << 0)
-                case (_, _, _, True):
-                    self.grid[exy][exx] &= ~(1 << 2)
-                case (True, _, _, _):
-                    self.grid[exy][exx] &= ~(1 << 3)
-                case (_, True, _, _):
-                    self.grid[exy][exx] &= ~(1 << 1)
-                case(False, False, False, False):
-                    pass  # ERROR HANDLING!!!
+    def _validate_entry_exit(self) -> None:
+        """Validate that entry and exit are distinct in-bounds cells."""
+        if not self._is_inbounds(*self.entry, self.width, self.height):
+            raise ValueError(f"entry {self.entry} out of bounds")
+        if not self._is_inbounds(*self.exits, self.width, self.height):
+            raise ValueError(f"exit {self.exits} out of bounds")
+        if self.entry == self.exits:
+            raise ValueError("entry and exit must differ")
 
     def wall_helper(self, x: int, y: int,
                     direction: Direction) -> None:
@@ -119,7 +104,7 @@ class MazeGenerator:
         y += dy
         self.grid[y][x] &= ~(1 << (direction.value + 2) % 4)
 
-    def solver(self) -> None:
+    def solver(self) -> str:
         (x, y) = self.entry
         array_visited = [[False for _ in range(
             self.width)]for _ in range(self.height)]
@@ -127,52 +112,106 @@ class MazeGenerator:
         array_visited[y][x] = True
         queue: deque[tuple[int, int]] = deque()
         queue.append(self.entry)
+        directions = []
         while queue:
             (x, y) = queue.popleft()
             if (x, y) == self.exits:
-                pass  # later
+                path = []
+                current = self.exits
+                while current != self.entry:
+                    path.append(current)
+                    current = came_from[current]
+                path.append(self.entry)
+                path.reverse()
+                for (px, py), (cx, cy) in zip(path, path[1:]):
+                    delta = (cx - px, cy - py)
+                    directions.append(delta_to_direction[delta])
+                return "".join(direction_to_letter[d] for d in directions)
             for direction in Direction:
                 (dx, dy) = Direction_Deltas[direction]
                 nx = x+dx
                 ny = y+dy
-                if (not (self.grid[ny][nx] & (1 << direction.value))
+                if (self._is_inbounds(nx, ny, self.width, self.height)
+                    and not (self.grid[y][x] & (1 << direction.value))
                         and not array_visited[ny][nx]):
                     array_visited[ny][nx] = True
                     came_from[(nx, ny)] = (x, y)
                     queue.append((nx, ny))
+        return "".join(direction_to_letter[d] for d in directions)
 
 
-def visualize(grid: list[list[int]]) -> None:
-    """Print an ASCII rendering of the maze grid to stdout."""
+def path_to_cells(path: str, entry: tuple[int, int]) -> set[tuple[int, int]]:
+    letter_to_direction = {v: k for k, v in direction_to_letter.items()}
+    cells = set()
+    x, y = entry
+    cells.add((x, y))
+    for letter in path:
+        direction = letter_to_direction[letter]
+        dx, dy = Direction_Deltas[direction]
+        x += dx
+        y += dy
+        cells.add((x, y))
+    return cells
+
+
+def visualize(grid: list[list[int]],
+              path: set[tuple[int, int]] | None = None,
+              entry: tuple[int, int] | None = None,
+              exits: tuple[int, int] | None = None) -> None:
+    """CLAUDE FUNCTION TO BE REPLACED"""
+    path = path or set()
     rows = len(grid)
     cols = len(grid[0])
+    wall = "\033[48;2;245;245;245m  \033[0m"
+    opening = "\033[48;2;10;10;10m  \033[0m"
+    on_path = "\033[48;2;255;200;0m  \033[0m"
+    entry_c = "\033[48;2;0;220;120m  \033[0m"
+    exit_c = "\033[48;2;230;30;30m  \033[0m"
+    h = 2 * rows + 1
+    w = 2 * cols + 1
+    canvas = [[wall for _ in range(w)] for _ in range(h)]
     for y in range(rows):
-        top = ""
-        middle = ""
         for x in range(cols):
             cell = grid[y][x]
-            north = cell & 1
-            west = cell & 8
-            top += "+" + ("---" if north else "   ")
-            middle += ("|" if west else " ") + "   "
-        print(top + "+")
-        print(middle + "|")
-    bottom = ""
-    for x in range(cols):
-        cell = grid[rows - 1][x]
-        south = cell & 4
-        bottom += "+" + ("---" if south else "   ")
-    print(bottom + "+")
+            cx = 2 * x + 1
+            cy = 2 * y + 1
+            if (x, y) == entry:
+                canvas[cy][cx] = entry_c
+            elif (x, y) == exits:
+                canvas[cy][cx] = exit_c
+            elif (x, y) in path:
+                canvas[cy][cx] = on_path
+            else:
+                canvas[cy][cx] = opening
+            here = (x, y) in path
+            neighbors = [
+                (1, cy - 1, cx, (x, y - 1)),
+                (2, cy, cx + 1, (x + 1, y)),
+                (4, cy + 1, cx, (x, y + 1)),
+                (8, cy, cx - 1, (x - 1, y)),
+            ]
+            for bit, wy, wx, other in neighbors:
+                if cell & bit:
+                    continue
+                linked = here and other in path
+                canvas[wy][wx] = on_path if linked else opening
+    for row in canvas:
+        print("".join(row))
 
 
 if __name__ == "__main__":
     width = int(input("Enter width: "))
     height = int(input("Enter height: "))
+    entry = (random.randint(0, width-1), random.randint(0, height-1,))
+    exit = (random.randint(0, width-1), random.randint(0, height-1,))
     mazegen = MazeGenerator(
-        width, height, (0, random.randint(0, width-1)),
-        (random.randint(0, height-1), height-1))
+        width, height, entry, exit)
+    print(mazegen.entry, mazegen.exits)
     mazegen.generate()
-    visualize(mazegen.grid)
+    path = mazegen.solver()
+    visualize(mazegen.grid, path_to_cells(path, mazegen.entry),
+              mazegen.entry, mazegen.exits)
+    print(path)
 
 
 def main() -> None:
