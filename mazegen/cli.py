@@ -22,13 +22,14 @@ def main() -> None:
 
     width = int(input("Enter width: "))
     height = int(input("Enter height: "))
+    perfect: bool = bool(input("Is perfect: "))
 
     entry = random_cell(width, height)
     exit_node = random_cell(width, height)
     while entry == exit_node:
         exit_node = random_cell(width, height)
 
-    mazegen = MazeGenerator(width, height, entry, exit_node)
+    mazegen = MazeGenerator(width, height, entry, exit_node, perfect)
     gen_result = mazegen.generate()
     if isinstance(gen_result, Err):
         print(f"generate failed: {gen_result.error.name}")
