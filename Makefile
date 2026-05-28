@@ -6,8 +6,15 @@ VENV_PYTHON = $(VENV)/bin/python
 MAIN ?= main.py
 
 MYPY_FLAGS = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+FLAKE8_FLAGS = --max-line-length=100 --exclude=.venv,.git,__pycache__,.mypy_cache,.ruff_cache,.pytest_cache,.ty
+FLAKE8 = sh -c 'if command -v flake8 >/dev/null 2>&1; then flake8 "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx flake8 "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run flake8 "$$@"; else $(VENV_PYTHON) -m flake8 "$$@"; fi' --
+MYPY = sh -c 'if command -v mypy >/dev/null 2>&1; then mypy "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx mypy "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run mypy "$$@"; else $(VENV_PYTHON) -m mypy "$$@"; fi' --
+RUFF = sh -c 'if command -v ruff >/dev/null 2>&1; then ruff "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx ruff "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run ruff "$$@"; else $(VENV_PYTHON) -m ruff "$$@"; fi' --
+TY = sh -c 'if command -v ty >/dev/null 2>&1; then ty "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx ty "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run ty "$$@"; else $(VENV_PYTHON) -m ty "$$@"; fi' --
+PYRIGHT = sh -c 'if command -v pyright >/dev/null 2>&1; then pyright "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx pyright "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run pyright "$$@"; else $(VENV_PYTHON) -m pyright "$$@"; fi' --
+PYTEST = sh -c 'if command -v pytest >/dev/null 2>&1; then pytest "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx pytest "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run pytest "$$@"; else $(VENV_PYTHON) -m pytest "$$@"; fi' --
 
-.PHONY: install install-pip run debug clean lint lint-strict format check-modern
+.PHONY: install install-pip run debug clean lint lint-strict format check-modern typecheck test
 
 install:
 	@if command -v $(UV) >/dev/null 2>&1; then \
@@ -43,29 +50,25 @@ clean:
 	find . -type f \( -name "*.pyc" -o -name "*.pyo" \) -delete
 
 lint:
-	@if command -v $(UV) >/dev/null 2>&1; then \
-		$(UV) run flake8 . && $(UV) run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs; \
-	else \
-		$(VENV_PYTHON) -m flake8 . && $(VENV_PYTHON) -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs; \
-	fi
+	$(FLAKE8) . $(FLAKE8_FLAGS)
+	$(MYPY) . $(MYPY_FLAGS)
 
 lint-strict:
-	@if command -v $(UV) >/dev/null 2>&1; then \
-		$(UV) run flake8 . && $(UV) run mypy . --strict; \
-	else \
-		$(VENV_PYTHON) -m flake8 . && $(VENV_PYTHON) -m mypy . --strict; \
-	fi
+	$(FLAKE8) . $(FLAKE8_FLAGS)
+	$(MYPY) . --strict
 
 format:
-	@if command -v $(UV) >/dev/null 2>&1; then \
-		$(UV) run ruff format . && $(UV) run ruff check --fix .; \
-	else \
-		$(VENV_PYTHON) -m ruff format . && $(VENV_PYTHON) -m ruff check --fix .; \
-	fi
+	$(RUFF) format .
+	$(RUFF) check --fix .
 
 check-modern:
-	@if command -v $(UV) >/dev/null 2>&1; then \
-		$(UV) run ruff check . && $(UV) run ty check .; \
-	else \
-		$(VENV_PYTHON) -m ruff check . && $(VENV_PYTHON) -m ty check .; \
-	fi
+	$(RUFF) check .
+	$(TY) check .
+
+typecheck:
+	$(MYPY) . $(MYPY_FLAGS)
+	$(TY) check .
+	$(PYRIGHT) .
+
+test:
+	$(PYTEST)

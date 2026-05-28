@@ -1,13 +1,13 @@
 [project]
 name = "mazegen"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["flake8", "mypy", "ruff", "ty", "pytest"]
+dev = ["flake8", "mypy", "pyright", "ruff", "ty", "pytest"]
 
 [project.scripts]
 mazegen = "mazegen.cli:main"
@@ -44,3 +44,4 @@ check_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
