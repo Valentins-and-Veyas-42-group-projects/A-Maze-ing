@@ -1,5 +1,6 @@
 from enum import Enum
 import random
+from collections import deque
 
 
 class Direction(Enum):
@@ -26,14 +27,6 @@ class MazeGenerator:
     the order NORTH, EAST, SOUTH, WEST.
     """
 
-    @staticmethod
-    def _is_inbounds(x: int, y: int, width: int, height: int) -> bool:
-        """Return True if (x, y) lies within the grid bounds."""
-        if 0 <= x < width and 0 <= y < height:
-            return True
-        else:
-            return False
-
     def __init__(self, width: int, height: int, entry: tuple[int, int],
                  exit: tuple[int, int]) -> None:
         """Initialize the generator with dimensions and endpoints."""
@@ -42,6 +35,14 @@ class MazeGenerator:
         self.grid: list[list[int]] = []
         self.entry = entry
         self.exits = exit
+
+    @staticmethod
+    def _is_inbounds(x: int, y: int, width: int, height: int) -> bool:
+        """Return True if (x, y) lies within the grid bounds."""
+        if 0 <= x < width and 0 <= y < height:
+            return True
+        else:
+            return False
 
     def init_grid(self) -> list[list[int]]:
         """Build a grid with all walls intact and return it."""
@@ -118,6 +119,28 @@ class MazeGenerator:
         y += dy
         self.grid[y][x] &= ~(1 << (direction.value + 2) % 4)
 
+    def solver(self) -> None:
+        (x, y) = self.entry
+        array_visited = [[False for _ in range(
+            self.width)]for _ in range(self.height)]
+        came_from: dict[tuple[int, int], tuple[int, int]] = {}
+        array_visited[y][x] = True
+        queue: deque[tuple[int, int]] = deque()
+        queue.append(self.entry)
+        while queue:
+            (x, y) = queue.popleft()
+            if (x, y) == self.exits:
+                pass  # later
+            for direction in Direction:
+                (dx, dy) = Direction_Deltas[direction]
+                nx = x+dx
+                ny = y+dy
+                if (not (self.grid[ny][nx] & (1 << direction.value))
+                        and not array_visited[ny][nx]):
+                    array_visited[ny][nx] = True
+                    came_from[(nx, ny)] = (x, y)
+                    queue.append((nx, ny))
+
 
 def visualize(grid: list[list[int]]) -> None:
     """Print an ASCII rendering of the maze grid to stdout."""
@@ -145,7 +168,9 @@ def visualize(grid: list[list[int]]) -> None:
 if __name__ == "__main__":
     width = int(input("Enter width: "))
     height = int(input("Enter height: "))
-    mazegen = MazeGenerator(width, height, (0, 0), (5, height-1))
+    mazegen = MazeGenerator(
+        width, height, (0, random.randint(0, width-1)),
+        (random.randint(0, height-1), height-1))
     mazegen.generate()
     visualize(mazegen.grid)
 
