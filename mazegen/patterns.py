@@ -53,7 +53,7 @@ PATTERN_SMALL = Pattern(
     height=5,
 )
 
-PATTERN_LARGE = Pattern(
+PATTERN_MEDIUM = Pattern(
     cells=[
         # 4
         (0, 0),          (4, 0),
@@ -79,6 +79,34 @@ PATTERN_LARGE = Pattern(
     width=11,
     height=9,
 )
+PATTERN_LARGE = Pattern(
+    cells=[
+
+        # 4
+        (6, 0),
+        (5, 1), (6, 1),
+        (4, 2),     (6, 2),
+        (3, 3),          (6, 3),
+        (2, 4),          (6, 4),
+        (1, 5),          (6, 5),
+        (0, 6),        (6, 6),
+        (6, 7),
+        (6, 8),
+        (6, 9),
+        (6, 10),
+        (6, 11),
+        (6, 12), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6),
+        # 2
+        (8, 0), (9, 0), (10, 0), (11, 0), (12, 0), (13, 0), (14, 0),
+        (14, 1), (14, 2), (14, 3), (14, 4), (14, 5), (14, 6),
+        (8, 6), (9, 6), (10, 6), (11, 6), (12, 6), (13, 6), (14, 6),
+        (8, 7), (8, 8), (8, 9), (8, 10), (8, 11), (8, 12),
+        (9, 12), (10, 12), (11, 12), (12, 12), (13, 12), (14, 12)
+
+    ],
+    width=15,
+    height=13,
+)
 
 
 def select_pattern(grid_width: int, grid_height: int) -> Pattern:
@@ -86,4 +114,6 @@ def select_pattern(grid_width: int, grid_height: int) -> Pattern:
 
     if 8 < grid_width < 25 and 6 < grid_height < 23:
         return PATTERN_SMALL
+    elif (25 < grid_width < 40 and 23 < grid_height < 38):
+        return PATTERN_MEDIUM
     return PATTERN_LARGE
