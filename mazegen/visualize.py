@@ -51,6 +51,8 @@ def visualize(
 def _draw_logo_border(
     canvas: list[list[str]], logo_cells: set[Cell]
 ) -> None:
+    """Recolor the wall slots around logo cells to the border shade."""
+
     height = len(canvas)
     width = len(canvas[0]) if canvas else 0
     for (x, y) in logo_cells:
@@ -70,6 +72,8 @@ def _draw_logo_border(
 def _fill_pillars(
     canvas: list[list[str]], rows: int, cols: int
 ) -> None:
+    """Fill wall-junction pillars based on their neighboring slots."""
+
     for y in range(rows - 1):
         for x in range(cols - 1):
             px = 2 * x + 2
@@ -99,6 +103,8 @@ def _draw_cell(
     exits: Cell | None,
     logo_cells: set[Cell],
 ) -> None:
+    """Paint one cell and its open walls onto the canvas."""
+
     cx = 2 * x + 1
     cy = 2 * y + 1
 

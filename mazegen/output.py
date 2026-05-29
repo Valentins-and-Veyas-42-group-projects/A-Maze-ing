@@ -8,7 +8,8 @@ from .solver import solve
 def format_output(grid: Grid, entry: Cell, exits: Cell) -> str | Err:
     """Format the grid, endpoints, and solved path as text."""
 
-    grid_str = "\n".join("".join(format(cell, "X") for cell in row) for row in grid)
+    grid_str = "\n".join("".join(format(cell, "X")
+                                 for cell in row) for row in grid)
     entry_str = f"{entry[0]},{entry[1]}"
     exit_str = f"{exits[0]},{exits[1]}"
     result = solve(grid, entry, exits)

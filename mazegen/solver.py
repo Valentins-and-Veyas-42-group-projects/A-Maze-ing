@@ -84,8 +84,10 @@ def path_to_edges(path: str, entry: Cell) -> tuple[set[Cell], set[Edge]]:
     return cells, edges
 
 
-def validate_path(grid: Grid, path: str, entry: Cell, exits: Cell) -> Ok[None] | Err:
-    """Validate that a direction string reaches exits without crossing walls."""
+def validate_path(grid: Grid, path: str,
+                  entry: Cell, exits: Cell) -> Ok[None] | Err:
+    """Validate that a direction string
+      reaches exits without crossing walls."""
 
     width = len(grid[0]) if grid else 0
     height = len(grid)
@@ -124,6 +126,8 @@ def _path_to_directions(
     entry: Cell,
     exits: Cell,
 ) -> str:
+    """Reconstruct the BFS came_from chain into a direction string."""
+
     path: list[Cell] = []
     current = exits
 
