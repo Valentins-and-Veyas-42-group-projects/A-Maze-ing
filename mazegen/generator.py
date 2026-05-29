@@ -1,6 +1,7 @@
 """Maze generation."""
 
 import random
+from typing import Callable
 
 from .errors import Err, MazeError, Ok
 from .patterns import Pattern, select_pattern
@@ -38,10 +39,10 @@ class MazeGenerator:
         self.perfect = perfect
         self.logo_cells: list[Cell] = []
 
-    def init_grid(self) -> Grid:
+    def init_grid(self, value: int) -> Grid:
         """Build a grid with all walls intact and return it."""
 
-        self.grid = [[15 for _ in range(self.width)]
+        self.grid = [[value for _ in range(self.width)]
                      for _ in range(self.height)]
         return self.grid
 
@@ -110,7 +111,53 @@ class MazeGenerator:
             if not self.would_make_open_sqr(xx, yy, direction):
                 self.remove_wall(xx, yy, direction)
 
-    def generate(self) -> Ok[None] | Err:
+    def bin_tree(self,
+                 on_step: Callable[[], None] | None = None) -> Ok[None] | Err:
+        """Carve the maze with the binary tree algorithm.
+
+        Each cell removes either its north or east wall, biasing the
+        maze toward a top-right corridor texture.
+        """
+
+        check = self._validate()
+        if isinstance(check, Err):
+            return check
+
+        self.init_grid(15)
+        pattern = select_pattern(self.width, self.height)
+        logo_cells = pattern.placed_cells(self.width, self.height)
+
+        if not pattern.fits(self.width, self.height):
+            print("Maze too small for logo")
+        elif self.entry in logo_cells or self.exits in logo_cells:
+            print("Entry/Exit would be in Logo")
+        else:
+            self.logo_cells = self.add_42(pattern)
+        logo = set(self.logo_cells)
+
+        for y in range(self.height):
+            for x in range(self.width):
+                if (x, y) in logo:
+                    continue
+                options: list[Direction] = []
+                for direction in (Direction.NORTH, Direction.EAST):
+                    dx, dy = DIRECTION_DELTAS[direction]
+                    nx, ny = x + dx, y + dy
+                    if (is_inbounds(nx, ny, self.width, self.height)
+                            and (nx, ny) not in logo):
+                        options.append(direction)
+                if options:
+                    self.remove_wall(x, y, random.choice(options))
+                    if on_step:
+                        on_step()
+
+        if not self.perfect:
+            self.add_loops()
+
+        return Ok(None)
+
+    def generate(self,
+                 on_step: Callable[[], None] | None = None) -> Ok[None] | Err:
         """Carve the maze in place via iterative randomized DFS."""
 
         check = self._validate()
@@ -119,7 +166,7 @@ class MazeGenerator:
 
         visited = [[False for _ in range(self.width)]
                    for _ in range(self.height)]
-        self.init_grid()
+        self.init_grid(15)
         pattern = select_pattern(self.width, self.height)
         logo_cells = pattern.placed_cells(self.width, self.height)
 
@@ -149,6 +196,8 @@ class MazeGenerator:
                 self.remove_wall(x, y, direction)
                 visited[ny][nx] = True
                 stack.append((nx, ny))
+                if on_step:
+                    on_step()
             else:
                 stack.pop()
         if not self.perfect:

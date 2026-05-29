@@ -3,13 +3,13 @@
 from .shared import DIRECTION_DELTAS, Cell, Edge, Grid
 ANSI_RESET = "\033[0m"
 
-ANSI_WALL = "\033[48;2;245;245;245m  "
+ANSI_WALL = "\033[48;2;184;2;44m  "
 ANSI_OPEN = "\033[48;2;10;10;10m  "
-ANSI_PATH = "\033[48;2;255;200;0m  "
+ANSI_PATH = "\033[48;2;255;200;255m  "
 ANSI_ENTRY = "\033[48;2;0;220;120m  "
 ANSI_EXIT = "\033[48;2;230;30;30m  "
-ANSI_LOGO = "\033[48;2;0;160;255m  "
-ANSI_LOGO_BORDER = "\033[48;2;0;60;130m  "
+ANSI_LOGO = "\033[48;2;141;16;205m  "
+ANSI_LOGO_BORDER = "\033[48;2;77;11;110m  "
 
 
 def visualize(
@@ -20,6 +20,7 @@ def visualize(
     exits: Cell | None = None,
     logo_cells: set[Cell] | None = None,
     wall_color: tuple[int, int, int] | None = None,
+    animating: bool = False,
 ) -> None:
     """Render maze with ANSI colors."""
     if wall_color:
@@ -43,7 +44,7 @@ def visualize(
         for x in range(cols):
             _draw_cell(
                 canvas, grid[y][x], x, y, path_cells, path_edges,
-                entry, exits, logo_cells
+                entry, exits, logo_cells, animating
             )
 
     _fill_pillars(canvas, rows, cols, wall)
@@ -109,11 +110,15 @@ def _draw_cell(
     entry: Cell | None,
     exits: Cell | None,
     logo_cells: set[Cell],
+    animating: bool,
 ) -> None:
     """Paint one cell and its open walls onto the canvas."""
 
     cx = 2 * x + 1
     cy = 2 * y + 1
+
+    if animating and cell == 15 and (x, y) not in (entry, exits):
+        return
 
     if (x, y) == entry:
         canvas[cy][cx] = ANSI_ENTRY
