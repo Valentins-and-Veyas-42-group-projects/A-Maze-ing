@@ -19,9 +19,14 @@ def visualize(
     entry: Cell | None = None,
     exits: Cell | None = None,
     logo_cells: set[Cell] | None = None,
+    wall_color: tuple[int, int, int] | None = None,
 ) -> None:
     """Render maze with ANSI colors."""
-
+    if wall_color:
+        r, g, b = wall_color
+        wall: str = f"\033[48;2;{r};{g};{b}m  "
+    else:
+        wall = ANSI_WALL
     path_cells = path_cells or set()
     path_edges = path_edges or set()
     logo_cells = logo_cells or set()
@@ -31,7 +36,7 @@ def visualize(
     canvas_height = 2 * rows + 1
     canvas_width = 2 * cols + 1
     canvas = [
-        [ANSI_WALL for _ in range(canvas_width)] for _ in range(canvas_height)
+        [wall for _ in range(canvas_width)] for _ in range(canvas_height)
     ]
 
     for y in range(rows):
@@ -41,15 +46,16 @@ def visualize(
                 entry, exits, logo_cells
             )
 
-    _fill_pillars(canvas, rows, cols)
-    _draw_logo_border(canvas, logo_cells)
+    _fill_pillars(canvas, rows, cols, wall)
+    _draw_logo_border(canvas, logo_cells, wall)
 
     for row in canvas:
         print("".join(row) + ANSI_RESET)
 
 
 def _draw_logo_border(
-    canvas: list[list[str]], logo_cells: set[Cell]
+    canvas: list[list[str]], logo_cells: set[Cell],
+    wall: str
 ) -> None:
     """Recolor the wall slots around logo cells to the border shade."""
 
@@ -65,12 +71,13 @@ def _draw_logo_border(
                 wx = cx + ox
                 wy = cy + oy
                 if 0 <= wy < height and 0 <= wx < width:
-                    if canvas[wy][wx] == ANSI_WALL:
+                    if canvas[wy][wx] == wall:
                         canvas[wy][wx] = ANSI_LOGO_BORDER
 
 
 def _fill_pillars(
-    canvas: list[list[str]], rows: int, cols: int
+    canvas: list[list[str]], rows: int, cols: int,
+    wall: str
 ) -> None:
     """Fill wall-junction pillars based on their neighboring slots."""
 
@@ -84,7 +91,7 @@ def _fill_pillars(
                 canvas[py][px - 1],
                 canvas[py][px + 1],
             )
-            if any(s == ANSI_WALL for s in slots):
+            if any(s == wall for s in slots):
                 continue
             if all(s == ANSI_PATH for s in slots):
                 canvas[py][px] = ANSI_PATH

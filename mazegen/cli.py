@@ -17,6 +17,22 @@ def random_cell(width: int, height: int) -> Cell:
     return (random.randint(0, width - 1), random.randint(0, height - 1))
 
 
+def _get_maze_input() -> MazeGenerator:
+    """For future input menu"""
+    width = int(input("Maze width: "))
+    height = int(input("Maze height: "))
+    perfect: bool = input("Is perfect: ").strip().lower() in (
+        "true", "1", "yes", "y", "t"
+    )
+    entry = random_cell(width, height)
+    exit_node = random_cell(width, height)
+    while entry == exit_node:
+        exit_node = random_cell(width, height)
+    seed = input("Seed: ")
+    random.seed(seed)
+    return MazeGenerator(width, height, entry, exit_node, perfect)
+
+
 def main() -> None:
     """CLI execution entrypoint."""
 
@@ -25,7 +41,8 @@ def main() -> None:
     perfect: bool = input("Is perfect: ").strip().lower() in (
         "true", "1", "yes", "y", "t"
     )
-
+    seed = input("Seed: ")
+    random.seed(seed)
     entry = random_cell(width, height)
     exit_node = random_cell(width, height)
     while entry == exit_node:
