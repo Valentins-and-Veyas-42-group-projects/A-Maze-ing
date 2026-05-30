@@ -44,7 +44,8 @@ T = TypeVar("T")
 
 @dataclass(frozen=True)
 class Diagnostic:
-    """Stores the exact location and context of an error for Rust-style reporting."""
+    """Stores the exact location and context of an
+    error for Rust-style reporting."""
 
     filename: str
     line_num: int
@@ -63,13 +64,15 @@ class Ok(Generic[T]):
 
 @dataclass(frozen=True)
 class Err(Generic[E]):
-    """Wrap a failure result carrying an error variant and optional diagnostic context."""
+    """Wrap a failure result carrying an error
+    variant and optional diagnostic context."""
 
     error: E
     diagnostic: Diagnostic | None = None
 
     def print_diagnostic(self) -> None:
-        """Prints a rust-style diagnostic message with dynamic caret alignment."""
+        """Prints a rust-style diagnostic message
+          with dynamic caret alignment."""
         RED = "\033[1;31m"
         PINK = "\033[1;35m"
         BLUE = "\033[1;34m"
@@ -86,7 +89,8 @@ class Err(Generic[E]):
         if not self.diagnostic:
             print(f" {RED}×{RESET} {BOLD}Operation failed{RESET}")
             print(
-                f"   {RED}╰─▶{RESET} {err_name_str.replace('ERR_', '').replace('_', ' ').title()}"
+                f"   {RED}╰─▶{RESET} "
+                f"{err_name_str.replace('ERR_', '').replace('_', ' ').title()}"
             )
             return
 

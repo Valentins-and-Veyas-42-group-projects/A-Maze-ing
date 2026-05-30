@@ -106,7 +106,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
 
                     if int_val <= 0:
                         raise ValueError
-                    if key == "ALGORITHM" and int_val not in (1, 2):
+                    if key == "ALGORITHM" and int_val not in (1, 2, 3):
                         raise ValueError
 
                     parsed_values[key] = int_val
@@ -125,7 +125,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                     start_col = raw_line.find(val)
                     help_msg = f"{key} must be a positive integer (e.g., '20')"
                     if key == "ALGORITHM":
-                        help_msg = "ALGORITHM must be 1 for DFS or 2 for binary tree"
+                        help_msg = "ALGORITHM must be 1 for DFS, " \
+                            "2 for binary tree, or 3 for Prim's"
 
                     diag = Diagnostic(
                         filename=config_file,
@@ -383,7 +384,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + len(val),
-                        help_msg="WALL_COLOR must contain three RGB integers (e.g., '184,2,44')",
+                        help_msg="WALL_COLOR must contain three "
+                        "RGB integers (e.g., '184,2,44')",
                     )
 
                     return Err(ConfigError.ERR_INVALID_WALL_COLOR, diag)
@@ -401,7 +403,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + len(val),
-                        help_msg="WALL_COLOR channels must be integers from 0 to 255",
+                        help_msg="WALL_COLOR channels must be"
+                        " integers from 0 to 255",
                     )
 
                     return Err(ConfigError.ERR_INVALID_WALL_COLOR, diag)
@@ -424,7 +427,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                     ),
                 )
                 if dist <= max_allowed_distance:
-                    help_msg = f"Unknown configuration key '{key}'. Did you mean '{best_match}'?"
+                    help_msg = f"Unknown configuration"\
+                        f"key '{key}'. Did you mean '{best_match}'?"
                 else:
                     help_msg = f"Unknown configuration key '{key}'"
 

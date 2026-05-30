@@ -80,14 +80,18 @@ def _save_output(mazegen: MazeGenerator, output_file: str) -> None:
 
 
 def _build_maze(
+
     animation: bool,
     alge: int,
     config: Config | None,
+    isregen: bool,
 ) -> tuple[MazeGenerator, set[Cell], set[Edge]]:
     """Read input, generate, solve, and validate a fresh maze."""
 
-    if config is not None and config.seed is not None:
+    if config is not None and config.seed is not None and not isregen:
         random.seed(config.seed)
+    else:
+        random.seed()
     mazegen = _get_maze_input(config)
     wait_time = 0.01
     if config is not None:
@@ -105,6 +109,11 @@ def _build_maze(
             gen_result = mazegen.generate(on_step=animate_step)
         else:
             gen_result = mazegen.generate()
+    elif alge == 3:
+        if animation:
+            gen_result = mazegen.prims_algorithm(on_step=animate_step)
+        else:
+            gen_result = mazegen.prims_algorithm()
     else:
         if animation:
             gen_result = mazegen.bin_tree(on_step=animate_step)
@@ -151,14 +160,15 @@ def main() -> None:
         ani: bool = input("Is Animation: ").strip().lower() in (
             "true", "1", "yes", "y", "t"
         )
-        alge = int(input("Choose alge. 1 for DFS 2 for bintree"))
+        alge = int(input(
+            "Choose alge. 1 for DFS 2 for bintree 3 for Prim's: "))
     else:
         ani = config.animation
         alge = config.algorithm
     try:
         print("\033[?1049h", end="", flush=True)
 
-        mazegen, path_cells, path_edges = _build_maze(ani, alge, config)
+        mazegen, path_cells, path_edges = _build_maze(ani, alge, config, False)
         show_path = config.show_path if config is not None else False
         wall_color = config.wall_color if config is not None else None
         while True:
@@ -180,7 +190,8 @@ def main() -> None:
                 case "2":
                     wall_color = _random_wall_color()
                 case "r":
-                    mazegen, path_cells, path_edges = _build_maze(ani, alge, config)
+                    mazegen, path_cells, path_edges = _build_maze(
+                        ani, alge, config, True)
                 case "s":
                     _save_output(mazegen, output_file)
                 case "q":

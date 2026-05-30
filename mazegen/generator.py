@@ -205,6 +205,67 @@ class MazeGenerator:
 
         return Ok(None)
 
+    def prims_algorithm(
+            self,
+            on_step: Callable[[], None] | None = None) -> Ok[None] | Err:
+        check = self._validate()
+        if isinstance(check, Err):
+            return check
+
+        visited = [[False for _ in range(self.width)]
+                   for _ in range(self.height)]
+        self.init_grid(15)
+        pattern = select_pattern(self.width, self.height)
+        logo_cells = pattern.placed_cells(self.width, self.height)
+
+        if not pattern.fits(self.width, self.height):
+            print("Maze too small for logo")
+        elif self.entry in logo_cells or self.exits in logo_cells:
+            print("Entry/Exit would be in Logo")
+        else:
+            self.logo_cells = self.add_42(pattern)
+        visited[self.entry[1]][self.entry[0]] = True
+        frontier: list[tuple[int, int]] = []
+        x, y = self.entry
+        for direction in Direction:
+            dx, dy = DIRECTION_DELTAS[direction]
+            nx = x + dx
+            ny = y + dy
+            if (is_inbounds(nx, ny, self.width, self.height)
+                    and not visited[ny][nx]
+                    and (nx, ny)not in self.logo_cells):
+                frontier.append((nx, ny))
+        while frontier:
+            visited_neighbors = []
+            new_frontier = []
+            i = random.randrange(len(frontier))
+            frontier[i], frontier[-1] = frontier[-1], frontier[i]
+            fx, fy = frontier.pop()
+            if visited[fy][fx]:
+                continue
+            visited[fy][fx] = True
+            for direction in Direction:
+                dx, dy = DIRECTION_DELTAS[direction]
+                nx = fx + dx
+                ny = fy + dy
+                if not (is_inbounds(nx, ny, self.width, self.height)
+                        and (nx, ny) not in self.logo_cells):
+                    continue
+                if visited[ny][nx]:
+                    visited_neighbors.append((direction, nx, ny))
+                else:
+                    new_frontier.append((nx, ny))
+            if visited_neighbors:
+                direction, nx, ny = random.choice(visited_neighbors)
+                self.remove_wall(fx, fy, direction)
+                frontier.extend(new_frontier)
+                if on_step:
+                    on_step()
+        if not self.perfect:
+            self.add_loops()
+
+        return Ok(None)
+
     def _validate(self) -> Ok[None] | Err:
         """Validate dimensions and endpoints."""
 

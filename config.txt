@@ -1,12 +1,12 @@
-WIDTH = 20
-HEIGHT = 15
+WIDTH = 50
+HEIGHT = 50
 OUTPUT_FILE = maze.txt
-PERFECT = True
-ANIMATION = False
-ALGORITHM = 1
+PERFECT = False
+ANIMATION = True
+ALGORITHM = 3
 SEED = demo
 SHOW_PATH = False
-SPEED = 1
+SPEED = 1000
 
 # --- SECTION 2: SYNTAX & DELIMITER ERRORS ---
 # Uncomment below to trigger: ERR_INVALID_SYNTAX (Missing delimiter)
@@ -27,8 +27,8 @@ SPEED = 1
 
 # --- SECTION 4: COORDINATE VALIDATIONS (ENTRY / EXIT) ---
 # Valid defaults to leave running when errors are off:
-ENTRY = 0,0
-EXIT = 19,14
+ENTRY = 22,15
+EXIT = 45,45
 
 # Uncomment below to trigger: ERR_INVALID_ENTRY (Missing a coordinate element)
 # ENTRY = 0,
