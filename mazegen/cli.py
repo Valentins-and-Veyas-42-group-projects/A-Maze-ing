@@ -90,13 +90,17 @@ def _build_maze(
 
     if config is not None and config.seed is not None and not isregen:
         random.seed(config.seed)
-    else:
-        random.seed()
+    elif isregen:
         alge = int(input(
             "Choose alge. 1 for DFS 2 for bintree 3 for Prim's: "))
+        random.seed()
+
         # animation = input("Is Animation: ").strip().lower() in (
         #   "true", "1", "yes", "y", "t"
         # )
+    else:
+        random.seed()
+
     mazegen = _get_maze_input(config)
     wait_time = 0.001
     if config is not None:
