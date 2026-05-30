@@ -38,6 +38,7 @@ class MazeGenerator:
         self.exits = exit
         self.perfect = perfect
         self.logo_cells: list[Cell] = []
+        self.cursor: Cell | None = None
 
     def init_grid(self, value: int) -> Grid:
         """Build a grid with all walls intact and return it."""
@@ -148,6 +149,7 @@ class MazeGenerator:
                         options.append(direction)
                 if options:
                     self.remove_wall(x, y, random.choice(options))
+                    self.cursor = (x, y)
                     if on_step:
                         on_step()
 
@@ -196,6 +198,7 @@ class MazeGenerator:
                 self.remove_wall(x, y, direction)
                 visited[ny][nx] = True
                 stack.append((nx, ny))
+                self.cursor = (nx, ny)
                 if on_step:
                     on_step()
             else:
@@ -259,6 +262,7 @@ class MazeGenerator:
                 direction, nx, ny = random.choice(visited_neighbors)
                 self.remove_wall(fx, fy, direction)
                 frontier.extend(new_frontier)
+                self.cursor = (fx, fy)
                 if on_step:
                     on_step()
         if not self.perfect:

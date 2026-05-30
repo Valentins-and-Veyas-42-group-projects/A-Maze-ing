@@ -11,6 +11,7 @@ ANSI_ENTRY = "\033[48;2;0;220;120m  "
 ANSI_EXIT = "\033[48;2;230;30;30m  "
 ANSI_LOGO = "\033[48;2;141;16;205m  "
 ANSI_LOGO_BORDER = "\033[48;2;77;11;110m  "
+ANSI_CURSOR = "\033[48;2;255;235;0m  "
 
 
 def visualize(
@@ -22,6 +23,7 @@ def visualize(
     logo_cells: set[Cell] | None = None,
     wall_color: tuple[int, int, int] | None = None,
     animating: bool = False,
+    cursor: Cell | None = None,
 ) -> None:
     """Render maze with ANSI colors."""
     if wall_color:
@@ -50,6 +52,11 @@ def visualize(
 
     _fill_pillars(canvas, rows, cols, wall)
     _draw_logo_border(canvas, logo_cells, wall)
+
+    if cursor is not None:
+        cx, cy = cursor
+        if 0 <= cy < rows and 0 <= cx < cols:
+            canvas[2 * cy + 1][2 * cx + 1] = ANSI_CURSOR
 
     for row in canvas:
         print("".join(row) + ANSI_RESET)

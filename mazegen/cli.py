@@ -93,7 +93,7 @@ def _build_maze(
     else:
         random.seed()
     mazegen = _get_maze_input(config)
-    wait_time = 0.01
+    wait_time = 0.001
     if config is not None:
         wait_time = config.force_wait_time / config.speed
 
@@ -101,7 +101,7 @@ def _build_maze(
         print("\033[?2026h", end="", flush=True)
         print("\033[2J\033[H", end="")
         visualize(mazegen.grid, entry=mazegen.entry, exits=mazegen.exits,
-                  animating=True)
+                  animating=True, cursor=mazegen.cursor)
         print("\033[?2026l", end="", flush=True)
         time.sleep(wait_time)
     if alge == 1:
