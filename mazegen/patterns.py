@@ -114,6 +114,6 @@ def select_pattern(grid_width: int, grid_height: int) -> Pattern:
 
     if 8 < grid_width < 25 and 6 < grid_height < 23:
         return PATTERN_SMALL
-    elif (25 < grid_width < 40 and 23 < grid_height < 38):
+    elif (25 <= grid_width < 40 and 23 <= grid_height < 38):
         return PATTERN_MEDIUM
     return PATTERN_LARGE

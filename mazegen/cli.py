@@ -92,6 +92,11 @@ def _build_maze(
         random.seed(config.seed)
     else:
         random.seed()
+        alge = int(input(
+            "Choose alge. 1 for DFS 2 for bintree 3 for Prim's: "))
+        # animation = input("Is Animation: ").strip().lower() in (
+        #   "true", "1", "yes", "y", "t"
+        # )
     mazegen = _get_maze_input(config)
     wait_time = 0.001
     if config is not None:

@@ -427,7 +427,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                     ),
                 )
                 if dist <= max_allowed_distance:
-                    help_msg = f"Unknown configuration"\
+                    help_msg = f"Unknown configuration "\
                         f"key '{key}'. Did you mean '{best_match}'?"
                 else:
                     help_msg = f"Unknown configuration key '{key}'"

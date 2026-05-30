@@ -94,7 +94,7 @@ def test_parse_config_uses_defaults_for_optional_values(tmp_path: Path) -> None:
         ("WIDTH = zero", ConfigError.ERR_INVALID_WIDTH, "WIDTH must be"),
         ("HEIGHT = -1", ConfigError.ERR_INVALID_HEIGHT, "HEIGHT must be"),
         ("SPEED = 0", ConfigError.ERR_INVALID_SPEED, "SPEED must be"),
-        ("ALGORITHM = 3", ConfigError.ERR_INVALID_ALGORITHM, "ALGORITHM must be"),
+        ("ALGORITHM = 4", ConfigError.ERR_INVALID_ALGORITHM, "ALGORITHM must be"),
     ],
 )
 def test_parse_config_rejects_non_positive_integers(
