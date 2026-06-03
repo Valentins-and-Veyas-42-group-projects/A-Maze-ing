@@ -1,8 +1,7 @@
-"""Command-line maze generator, solver, and ANSI-colorizer."""
+"""Command-line maze generator and solver."""
 
 import random
 import sys
-import time
 
 from .config import Config, parse_config
 from .errors import Err
@@ -10,7 +9,6 @@ from .generator import MazeGenerator
 from .output import format_output
 from .shared import Cell, Edge
 from .solver import path_to_edges, solve, validate_path
-from .visualize import visualize
 
 
 def random_cell(width: int, height: int) -> Cell:
@@ -57,16 +55,6 @@ def _get_maze_input(config: Config | None) -> MazeGenerator:
     return MazeGenerator(width, height, entry, exit_node, perfect)
 
 
-def _random_wall_color() -> tuple[int, int, int]:
-    """Return a random RGB wall color."""
-
-    return (
-        random.randint(0, 255),
-        random.randint(0, 255),
-        random.randint(0, 255),
-    )
-
-
 def _save_output(mazegen: MazeGenerator, output_file: str) -> None:
     """Write the maze, endpoints, and path to an output file."""
 
@@ -80,8 +68,6 @@ def _save_output(mazegen: MazeGenerator, output_file: str) -> None:
 
 
 def _build_maze(
-
-    animation: bool,
     alge: int,
     config: Config | None,
     isregen: bool,
@@ -94,40 +80,18 @@ def _build_maze(
         alge = int(input(
             "Choose alge. 1 for DFS 2 for bintree 3 for Prim's: "))
         random.seed()
-
-        # animation = input("Is Animation: ").strip().lower() in (
-        #   "true", "1", "yes", "y", "t"
-        # )
     else:
         random.seed()
 
     mazegen = _get_maze_input(config)
-    wait_time = 0.001
-    if config is not None:
-        wait_time = config.force_wait_time / config.speed
 
-    def animate_step() -> None:
-        print("\033[?2026h", end="", flush=True)
-        print("\033[2J\033[H", end="")
-        visualize(mazegen.grid, entry=mazegen.entry, exits=mazegen.exits,
-                  animating=True, cursor=mazegen.cursor)
-        print("\033[?2026l", end="", flush=True)
-        time.sleep(wait_time)
     if alge == 1:
-        if animation:
-            gen_result = mazegen.generate(on_step=animate_step)
-        else:
-            gen_result = mazegen.generate()
+        gen_result = mazegen.generate()
     elif alge == 3:
-        if animation:
-            gen_result = mazegen.prims_algorithm(on_step=animate_step)
-        else:
-            gen_result = mazegen.prims_algorithm()
+        gen_result = mazegen.prims_algorithm()
     else:
-        if animation:
-            gen_result = mazegen.bin_tree(on_step=animate_step)
-        else:
-            gen_result = mazegen.bin_tree()
+        gen_result = mazegen.bin_tree()
+
     if isinstance(gen_result, Err):
         print(f"generate failed: {gen_result.error.name}")
         sys.exit(1)
@@ -155,61 +119,40 @@ def _print_menu(show_path: bool) -> None:
     state = "on" if show_path else "off"
     print()
     print(f"[1] Toggle solution path (currently {state})")
-    print("[2] Randomize wall color")
     print("[r] Regenerate maze")
     print("[s] Save to output.txt")
     print("[q] Quit")
 
 
 def main() -> None:
-    """Generate a maze, then drive the interactive ANSI viewer."""
+    """Generate a maze, then drive the interactive viewer."""
     config = _load_config()
     output_file = config.output_file if config is not None else "output.txt"
     if config is None:
-        ani: bool = input("Is Animation: ").strip().lower() in (
-            "true", "1", "yes", "y", "t"
-        )
         alge = int(input(
             "Choose alge. 1 for DFS 2 for bintree 3 for Prim's: "))
     else:
-        ani = config.animation
         alge = config.algorithm
-    try:
-        print("\033[?1049h", end="", flush=True)
 
-        mazegen, path_cells, path_edges = _build_maze(ani, alge, config, False)
-        show_path = config.show_path if config is not None else False
-        wall_color = config.wall_color if config is not None else None
-        while True:
-            print("\033[2J\033[H", end="")
+    mazegen, path_cells, path_edges = _build_maze(alge, config, False)
+    show_path = config.show_path if config is not None else False
 
-            visualize(
-                mazegen.grid,
-                path_cells if show_path else None,
-                path_edges if show_path else None,
-                mazegen.entry,
-                mazegen.exits,
-                set(mazegen.logo_cells),
-                wall_color,
-            )
-            _print_menu(show_path)
-            match input("> ").strip().lower():
-                case "1":
-                    show_path = not show_path
-                case "2":
-                    wall_color = _random_wall_color()
-                case "r":
-                    mazegen, path_cells, path_edges = _build_maze(
-                        ani, alge, config, True)
-                case "s":
-                    _save_output(mazegen, output_file)
-                case "q":
-                    print("\033[?1049l", end="", flush=True)
-                    break
-                case _:
-                    print("Invalid choice.")
-    finally:
-        print("\033[?1049l", end="", flush=True)
+    while True:
+        # TODO: render maze here
+
+        _print_menu(show_path)
+        match input("> ").strip().lower():
+            case "1":
+                show_path = not show_path
+            case "r":
+                mazegen, path_cells, path_edges = _build_maze(
+                    alge, config, True)
+            case "s":
+                _save_output(mazegen, output_file)
+            case "q":
+                break
+            case _:
+                print("Invalid choice.")
 
 
 if __name__ == "__main__":
