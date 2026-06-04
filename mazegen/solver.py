@@ -1,6 +1,7 @@
 """Maze solving and path conversion."""
 
 from collections import deque
+from collections.abc import Callable
 
 from .errors import Err, MazeError, Ok
 from .shared import (
@@ -20,6 +21,7 @@ def solve(
     grid: Grid,
     entry: Cell,
     exits: Cell,
+    on_step: Callable[[set[Cell], set[Cell]], None] | None = None,
 ) -> Ok[str] | Err:
     """Solve the maze with BFS and return directions as a string."""
 
@@ -34,6 +36,7 @@ def solve(
         return Err(MazeError.INVALID_EXIT)
 
     visited = [[False for _ in range(width)] for _ in range(height)]
+    visited_set: set[Cell] = {entry}
     came_from: dict[Cell, Cell] = {}
     queue: deque[Cell] = deque([entry])
     visited[y][x] = True
@@ -56,8 +59,12 @@ def solve(
                 continue
 
             visited[ny][nx] = True
+            visited_set.add((nx, ny))
             came_from[(nx, ny)] = (x, y)
             queue.append((nx, ny))
+
+        if on_step is not None:
+            on_step(visited_set, set(queue))
 
     return Err(MazeError.NO_PATH_FOUND)
 

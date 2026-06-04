@@ -1,5 +1,6 @@
 """Maze visualization — to be implemented."""
 import curses
+from collections.abc import Callable
 from .errors import Err
 from .generator import MazeGenerator
 from .output import save_output
@@ -16,6 +17,8 @@ EXIT = 5
 LOGO = 6
 LOGO_BORDER = 7
 CURSOR = 8
+VISITED = 9
+FRONTIER = 10
 
 PALETTE = {
     WALL: (168, 50, 78),
@@ -25,7 +28,9 @@ PALETTE = {
     EXIT: (235, 40, 40),
     LOGO: (150, 40, 220),
     LOGO_BORDER: (80, 20, 120),
-    CURSOR: (46, 199, 38)
+    CURSOR: (46, 199, 38),
+    VISITED: (25, 55, 120),
+    FRONTIER: (50, 200, 245),
 }
 
 FOOTER_SPACE = 2
@@ -56,7 +61,8 @@ def _draw_cell(
     exits: Cell | None,
     logo_cells: set[Cell],
     animation: bool = False,
-
+    visited_cells: set[Cell] = set(),
+    frontier_cells: set[Cell] = set(),
 ) -> None:
     """Paint one cell and its open walls onto the canvas."""
 
@@ -68,6 +74,10 @@ def _draw_cell(
         canvas[cy][cx] = ENTRY
     elif (x, y) == exits:
         canvas[cy][cx] = EXIT
+    elif frontier_cells and (x, y) in frontier_cells:
+        canvas[cy][cx] = FRONTIER
+    elif visited_cells and (x, y) in visited_cells:
+        canvas[cy][cx] = VISITED
     elif (x, y) in logo_cells:
         canvas[cy][cx] = LOGO
     elif (x, y) in path_cells:
@@ -82,8 +92,15 @@ def _draw_cell(
         wx = cx + dx
         wy = cy + dy
         neighbor = (x + dx, y + dy)
-        canvas[wy][wx] = PATH if (
-            (x, y), neighbor) in path_edges else OPEN
+
+        if ((x, y), neighbor) in path_edges:
+            canvas[wy][wx] = PATH
+        elif (x, y) in frontier_cells or neighbor in frontier_cells:
+            canvas[wy][wx] = FRONTIER
+        elif (x, y) in visited_cells and neighbor in visited_cells:
+            canvas[wy][wx] = VISITED
+        else:
+            canvas[wy][wx] = OPEN
 
 
 def _fill_pillars(
@@ -106,6 +123,8 @@ def _fill_pillars(
                 continue
             if all(s == PATH for s in slots):
                 canvas[py][px] = PATH
+            elif all(s in (VISITED, PATH) for s in slots):
+                canvas[py][px] = VISITED
             else:
                 canvas[py][px] = OPEN
 
@@ -140,6 +159,8 @@ def build_canvas(grid: Grid,
                  path_cells: set[Cell] | None = None,
                  path_edges: set[Edge] | None = None,
                  animating: bool = False,
+                 visited_cells: set[Cell] | None = None,
+                 frontier_cells: set[Cell] | None = None,
                  ) -> list[list[int]]:
     rows = len(grid)
     cols = len(grid[0])
@@ -148,13 +169,15 @@ def build_canvas(grid: Grid,
     path_cells = path_cells or set()
     path_edges = path_edges or set()
     logo_cells = logo_cells or set()
+    _visited = visited_cells or set()
+    _frontier = frontier_cells or set()
     canvas = [
         [WALL for _ in range(canvas_width)]for _ in range(canvas_height)]
     for y in range(rows):
         for x in range(cols):
             _draw_cell(
                 canvas, grid[y][x], x, y, path_cells, path_edges, entry, exits,
-                logo_cells, animating
+                logo_cells, animating, _visited, _frontier
             )
     _fill_pillars(canvas, rows, cols, WALL)
     _draw_logo_border(canvas, logo_cells, WALL)
@@ -169,17 +192,11 @@ def render(stdscr: curses.window, canvas: list[list[int]]) -> None:
     term_height, term_width = stdscr.getmaxyx()
     canvas_height, canvas_width = len(canvas), len(canvas[0])
     offset_y, offset_x = (
-        term_height-canvas_height)//2, (term_width-canvas_width * 2)//2
-    for y, row in enumerate(canvas):
-        for x, color_id in enumerate(row):
-            try:
-                stdscr.addstr(offset_y+y, offset_x + x*2, "  ",
-                              curses.color_pair(color_id))
-            except curses.error:
-                pass
+        term_height-canvas_height)//2, (term_width-canvas_width*2)//2
+    blit(stdscr, canvas, offset_y, offset_x)
 
 
-def runviewer(stdscr: curses.window, mazegen: MazeGenerator,
+def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
               alge: int,
               show_path: bool = False,
               output_file: str = "output.txt",
@@ -187,58 +204,115 @@ def runviewer(stdscr: curses.window, mazegen: MazeGenerator,
     setup_colors()
     curses.curs_set(0)
 
-    def on_step() -> None:
-        stdscr.clear()
-        animation_canvas = build_canvas(mazegen.grid, mazegen.entry,
-                                        mazegen.exits, None, mazegen.cursor,
-                                        None, None, True)
-        render(stdscr, animation_canvas)
-
-        stdscr.refresh()
-
-    if alge == 1:
-        gen_result = mazegen.generate(on_step if animation else None)
-    elif alge == 3:
-        gen_result = mazegen.prims_algorithm(on_step if animation else None)
-    else:
-        gen_result = mazegen.bin_tree(on_step if animation else None)
-
-    if isinstance(gen_result, Err):
-        return
-
-    solve_result = solve(mazegen.grid, mazegen.entry, mazegen.exits)
-    if isinstance(solve_result, Err):
-        return
-
-    path = solve_result.value
-    validation = validate_path(
-        mazegen.grid, path, mazegen.entry, mazegen.exits)
-    if isinstance(validation, Err):
-        return
-
-    path_cells, path_edges = path_to_edges(path, mazegen.entry)
-
     while True:
-        stdscr.clear()
-        if not show_path:
-            canvas = build_canvas(mazegen.grid, mazegen.entry, mazegen.exits,
-                                  set(mazegen.logo_cells), None,
-                                  None, None)
+        mazegen = make_mazegen()
+        step_count = 0
+
+        def on_step() -> None:
+            nonlocal step_count
+            step_count += 1
+            if step_count % 6 != 0:
+                return
+            stdscr.erase()
+            animation_canvas = build_canvas(mazegen.grid, mazegen.entry,
+                                            mazegen.exits, None,
+                                            mazegen.cursor,
+                                            None, None, True)
+            render(stdscr, animation_canvas)
+            stdscr.refresh()
+
+        if alge == 1:
+            gen_result = mazegen.generate(on_step if animation else None)
+        elif alge == 3:
+            gen_result = mazegen.prims_algorithm(
+                on_step if animation else None)
         else:
-            canvas = build_canvas(mazegen.grid, mazegen.entry, mazegen.exits,
-                                  set(mazegen.logo_cells), None,
-                                  path_cells, path_edges)
-        render(stdscr, canvas)
-        height, width = stdscr.getmaxyx()
-        stdscr.addstr(
-            height -
-            1, round(width/2)-30, "[p] show path     [s] save to output.txt"
-            "      [q] quit", curses.A_BOLD)
-        stdscr.refresh()
-        match stdscr.getch():
-            case q if q == ord('q'):
-                break
-            case p if p == ord('p'):
-                show_path = not show_path
-            case s if s == ord('s'):
-                save_output(mazegen, output_file)
+            gen_result = mazegen.bin_tree(on_step if animation else None)
+
+        if isinstance(gen_result, Err):
+            return
+
+        solve_step_count = 0
+
+        def solve_on_step(
+            visited: set[Cell], frontier: set[Cell]
+        ) -> None:
+            nonlocal solve_step_count
+            solve_step_count += 1
+            if solve_step_count % 4 != 0:
+                return
+            stdscr.erase()
+            solve_canvas = build_canvas(
+                mazegen.grid, mazegen.entry, mazegen.exits,
+                set(mazegen.logo_cells), None, None, None,
+                False, visited, frontier)
+            render(stdscr, solve_canvas)
+            curses.napms(5)
+            stdscr.refresh()
+
+        solve_result = solve(
+            mazegen.grid, mazegen.entry, mazegen.exits,
+            solve_on_step if animation else None)
+        if isinstance(solve_result, Err):
+            return
+
+        path = solve_result.value
+        validation = validate_path(
+            mazegen.grid, path, mazegen.entry, mazegen.exits)
+        if isinstance(validation, Err):
+            return
+
+        path_cells, path_edges = path_to_edges(path, mazegen.entry)
+
+        while True:
+            stdscr.erase()
+            if not show_path:
+                canvas = build_canvas(mazegen.grid, mazegen.entry,
+                                      mazegen.exits,
+                                      set(mazegen.logo_cells), None,
+                                      None, None)
+            else:
+                canvas = build_canvas(mazegen.grid,
+                                      mazegen.entry, mazegen.exits,
+                                      set(mazegen.logo_cells), None,
+                                      path_cells, path_edges)
+            render(stdscr, canvas)
+            height, width = stdscr.getmaxyx()
+            try:
+                stdscr.addstr(
+                    height - 1, round(width/2)-30,
+                    "[p] show path  [r] regenerate  [s] save  [q] quit",
+                    curses.A_BOLD)
+            except curses.error:
+                pass
+            stdscr.refresh()
+            match stdscr.getch():
+                case q if q == ord('q'):
+                    return
+                case p if p == ord('p'):
+                    show_path = not show_path
+                case r if r == ord('r'):
+                    break
+                case s if s == ord('s'):
+                    save_output(mazegen, output_file)
+
+
+def blit(stdscr: curses.window, canvas: list[list[int]],
+         offset_y: int, offset_x: int) -> None:
+    canvas_h = len(canvas)
+    canvas_w = len(canvas[0]) if canvas else 0
+
+    for sy in range(canvas_h):
+        row = canvas[sy]
+        sx = 0
+        while sx < canvas_w:
+            code = row[sx]
+            run = 1
+            while sx+run < canvas_w and row[sx+run] == code:
+                run += 1
+            try:
+                stdscr.addstr(offset_y+sy, offset_x + sx*2, "  "*run,
+                              curses.color_pair(code))
+            except curses.error:
+                pass
+            sx += run
