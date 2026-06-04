@@ -1,12 +1,14 @@
 """Maze output serialization."""
 
-from .errors import Err, Ok
+from .errors import Err, MazeError, Ok
 from .generator import MazeGenerator
 from .shared import Cell, Grid
 from .solver import solve
 
 
-def format_output(grid: Grid, entry: Cell, exits: Cell) -> str | Err:
+def format_output(
+    grid: Grid, entry: Cell, exits: Cell
+) -> str | Err[MazeError]:
     """Format the grid, endpoints, and solved path as text."""
 
     grid_str = "\n".join("".join(format(cell, "X")

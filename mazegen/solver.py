@@ -22,7 +22,7 @@ def solve(
     entry: Cell,
     exits: Cell,
     on_step: Callable[[set[Cell], set[Cell]], None] | None = None,
-) -> Ok[str] | Err:
+) -> Ok[str] | Err[MazeError]:
     """Solve the maze with BFS and return directions as a string."""
 
     width = len(grid[0]) if grid else 0
@@ -92,7 +92,7 @@ def path_to_edges(path: str, entry: Cell) -> tuple[set[Cell], set[Edge]]:
 
 
 def validate_path(grid: Grid, path: str,
-                  entry: Cell, exits: Cell) -> Ok[None] | Err:
+                  entry: Cell, exits: Cell) -> Ok[None] | Err[MazeError]:
     """Validate that a direction string
       reaches exits without crossing walls."""
 

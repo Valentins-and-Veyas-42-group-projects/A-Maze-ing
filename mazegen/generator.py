@@ -113,7 +113,8 @@ class MazeGenerator:
                 self.remove_wall(xx, yy, direction)
 
     def bin_tree(self,
-                 on_step: Callable[[], None] | None = None) -> Ok[None] | Err:
+                 on_step: Callable[[], None] | None = None
+                 ) -> Ok[None] | Err[MazeError]:
         """Carve the maze with the binary tree algorithm.
 
         Each cell removes either its north or east wall, biasing the
@@ -159,7 +160,8 @@ class MazeGenerator:
         return Ok(None)
 
     def generate(self,
-                 on_step: Callable[[], None] | None = None) -> Ok[None] | Err:
+                 on_step: Callable[[], None] | None = None
+                 ) -> Ok[None] | Err[MazeError]:
         """Carve the maze in place via iterative randomized DFS."""
 
         check = self._validate()
@@ -210,7 +212,8 @@ class MazeGenerator:
 
     def prims_algorithm(
             self,
-            on_step: Callable[[], None] | None = None) -> Ok[None] | Err:
+            on_step: Callable[[], None] | None = None
+    ) -> Ok[None] | Err[MazeError]:
         check = self._validate()
         if isinstance(check, Err):
             return check
@@ -270,7 +273,7 @@ class MazeGenerator:
 
         return Ok(None)
 
-    def _validate(self) -> Ok[None] | Err:
+    def _validate(self) -> Ok[None] | Err[MazeError]:
         """Validate dimensions and endpoints."""
 
         if self.width <= 0:
@@ -317,14 +320,14 @@ class MazeGenerator:
         opposite = (direction.value + 2) % 4
         self.grid[ny][nx] |= (1 << opposite)
 
-    def solver(self) -> Ok[str] | Err:
+    def solver(self) -> Ok[str] | Err[MazeError]:
         """Solve this maze and return directions from entry to exit."""
 
         from .solver import solve
 
         return solve(self.grid, self.entry, self.exits)
 
-    def output(self) -> str | Err:
+    def output(self) -> str | Err[MazeError]:
         """Format this maze as the project output file format."""
 
         from .output import format_output
