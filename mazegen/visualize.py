@@ -189,11 +189,7 @@ def build_canvas(grid: Grid,
 
 
 def render(stdscr: curses.window, canvas: list[list[int]]) -> None:
-    term_height, term_width = stdscr.getmaxyx()
-    canvas_height, canvas_width = len(canvas), len(canvas[0])
-    offset_y, offset_x = (
-        term_height-canvas_height)//2, (term_width-canvas_width*2)//2
-    blit(stdscr, canvas, offset_y, offset_x)
+    blit(stdscr, canvas)
 
 
 def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
@@ -247,7 +243,6 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
                 set(mazegen.logo_cells), None, None, None,
                 False, visited, frontier)
             render(stdscr, solve_canvas)
-            curses.napms(5)
             stdscr.refresh()
 
         solve_result = solve(
@@ -297,21 +292,29 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
                     save_output(mazegen, output_file)
 
 
-def blit(stdscr: curses.window, canvas: list[list[int]],
-         offset_y: int, offset_x: int) -> None:
+def blit(stdscr: curses.window, canvas: list[list[int]]) -> None:
+    term_h, term_w = stdscr.getmaxyx()
     canvas_h = len(canvas)
     canvas_w = len(canvas[0]) if canvas else 0
 
-    for sy in range(canvas_h):
-        row = canvas[sy]
+    vis_rows = min(term_h, canvas_h)
+    vis_cols = min(term_w // 2, canvas_w)
+    pad_y = max(0, (term_h - canvas_h) // 2)
+    pad_x = max(0, (term_w - canvas_w * 2) // 2)
+    off_r = max(0, (canvas_h - vis_rows) // 2)
+    off_c = max(0, (canvas_w - vis_cols) // 2)
+
+    for sy in range(vis_rows):
+        row = canvas[off_r + sy]
+        screen_y = pad_y + sy
         sx = 0
-        while sx < canvas_w:
-            code = row[sx]
+        while sx < vis_cols:
+            code = row[off_c + sx]
             run = 1
-            while sx+run < canvas_w and row[sx+run] == code:
+            while sx + run < vis_cols and row[off_c + sx + run] == code:
                 run += 1
             try:
-                stdscr.addstr(offset_y+sy, offset_x + sx*2, "  "*run,
+                stdscr.addstr(screen_y, pad_x + sx * 2, "  " * run,
                               curses.color_pair(code))
             except curses.error:
                 pass
