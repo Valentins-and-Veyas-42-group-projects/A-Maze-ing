@@ -6,9 +6,9 @@ import sys
 from .config import Config, parse_config
 from .errors import Err
 from .generator import MazeGenerator
-from .output import format_output
-from .shared import Cell, Edge
-from .solver import path_to_edges, solve, validate_path
+from .shared import Cell
+from .visualize import runviewer
+import curses
 
 
 def random_cell(width: int, height: int) -> Cell:
@@ -55,62 +55,20 @@ def _get_maze_input(config: Config | None) -> MazeGenerator:
     return MazeGenerator(width, height, entry, exit_node, perfect)
 
 
-def _save_output(mazegen: MazeGenerator, output_file: str) -> None:
-    """Write the maze, endpoints, and path to an output file."""
-
-    result = format_output(mazegen.grid, mazegen.entry, mazegen.exits)
-    if isinstance(result, Err):
-        print(f"Error compiling layout: {result.error.name}")
-        return
-    with open(output_file, "w") as f:
-        _ = f.write(result)
-    print(f"Maze layout saved to {output_file}")
-
-
 def _build_maze(
-    alge: int,
     config: Config | None,
     isregen: bool,
-) -> tuple[MazeGenerator, set[Cell], set[Edge]]:
-    """Read input, generate, solve, and validate a fresh maze."""
+) -> MazeGenerator:
+    """Seed the RNG and create the MazeGenerator."""
 
     if config is not None and config.seed is not None and not isregen:
         random.seed(config.seed)
     elif isregen:
-        alge = int(input(
-            "Choose alge. 1 for DFS 2 for bintree 3 for Prim's: "))
         random.seed()
     else:
         random.seed()
 
-    mazegen = _get_maze_input(config)
-
-    if alge == 1:
-        gen_result = mazegen.generate()
-    elif alge == 3:
-        gen_result = mazegen.prims_algorithm()
-    else:
-        gen_result = mazegen.bin_tree()
-
-    if isinstance(gen_result, Err):
-        print(f"generate failed: {gen_result.error.name}")
-        sys.exit(1)
-
-    solve_result = solve(mazegen.grid, mazegen.entry, mazegen.exits)
-    if isinstance(solve_result, Err):
-        print(f"solver failed: {solve_result.error.name}")
-        sys.exit(1)
-    path = solve_result.value
-
-    validation = validate_path(
-        mazegen.grid, path, mazegen.entry, mazegen.exits
-    )
-    if isinstance(validation, Err):
-        print(f"solver produced invalid path: {validation.error.name}")
-        sys.exit(1)
-
-    path_cells, path_edges = path_to_edges(path, mazegen.entry)
-    return mazegen, path_cells, path_edges
+    return _get_maze_input(config)
 
 
 def _print_menu(show_path: bool) -> None:
@@ -129,30 +87,20 @@ def main() -> None:
     config = _load_config()
     output_file = config.output_file if config is not None else "output.txt"
     if config is None:
+        animation: bool = input("Animation: ").strip().lower() in (
+            "true", "1", "yes", "y", "t"
+        )
         alge = int(input(
             "Choose alge. 1 for DFS 2 for bintree 3 for Prim's: "))
     else:
         alge = config.algorithm
+        animation = config.animation
 
-    mazegen, path_cells, path_edges = _build_maze(alge, config, False)
+    mazegen = _build_maze(config, False)
     show_path = config.show_path if config is not None else False
 
-    while True:
-        # TODO: render maze here
-
-        _print_menu(show_path)
-        match input("> ").strip().lower():
-            case "1":
-                show_path = not show_path
-            case "r":
-                mazegen, path_cells, path_edges = _build_maze(
-                    alge, config, True)
-            case "s":
-                _save_output(mazegen, output_file)
-            case "q":
-                break
-            case _:
-                print("Invalid choice.")
+    curses.wrapper(lambda stdscr: runviewer(
+        stdscr, mazegen, alge, show_path, output_file, animation))
 
 
 if __name__ == "__main__":
