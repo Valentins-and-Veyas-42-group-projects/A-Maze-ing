@@ -4,7 +4,7 @@ from collections.abc import Callable
 from .errors import Err
 from .generator import MazeGenerator
 from .output import save_output
-from .shared import Cell, Edge, DIRECTION_DELTAS, Grid
+from .shared import Cell, Edge, DIRECTION_DELTAS, Grid, LETTER_TO_DIRECTION
 from .solver import path_to_edges, solve, validate_path
 
 
@@ -257,7 +257,6 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
             mazegen.grid, path, mazegen.entry, mazegen.exits)
         if isinstance(validation, Err):
             return
-
         path_cells, path_edges = path_to_edges(path, mazegen.entry)
 
         while True:
@@ -295,6 +294,7 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
                     solve_result = solve(
                         mazegen.grid, mazegen.entry, mazegen.exits,
                         solve_on_step if solver_anim else None)
+                    path_anim(stdscr, mazegen, path)
                 case s if s == ord('s'):
                     save_output(mazegen, output_file)
 
@@ -326,3 +326,29 @@ def blit(stdscr: curses.window, canvas: list[list[int]]) -> None:
             except curses.error:
                 pass
             sx += run
+
+
+def path_anim(stdscr: curses.window, mazegen: MazeGenerator,
+              path: str) -> None:
+
+    path_cells_so_far: set[Cell] = set()
+    path_edges_so_far: set[Edge] = set()
+    x, y = mazegen.entry
+    path_cells_so_far.add((x, y))
+
+    for letter in path:
+        direction = LETTER_TO_DIRECTION[letter]
+        dx, dy = DIRECTION_DELTAS[direction]
+        nx, ny = x + dx, y + dy
+        path_edges_so_far.add(((x, y), (nx, ny)))
+        path_edges_so_far.add(((nx, ny), (x, y)))
+        path_cells_so_far.add((nx, ny))
+        x, y = nx, ny
+        stdscr.erase()
+        built_path = build_canvas(mazegen.grid, mazegen.entry,
+                                  mazegen.exits, set(
+                                      mazegen.logo_cells),
+                                  None, path_cells_so_far, path_edges_so_far,
+                                  False, None, None)
+        render(stdscr, built_path)
+        stdscr.refresh()
