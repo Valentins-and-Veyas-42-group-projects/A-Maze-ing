@@ -196,7 +196,8 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
               alge: int,
               show_path: bool = False,
               output_file: str = "output.txt",
-              animation: bool = False) -> None:
+              animation: bool = False,
+              solver_anim: bool = False) -> None:
     setup_colors()
     curses.curs_set(0)
 
@@ -247,7 +248,7 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
 
         solve_result = solve(
             mazegen.grid, mazegen.entry, mazegen.exits,
-            solve_on_step if animation else None)
+            solve_on_step if solver_anim else None)
         if isinstance(solve_result, Err):
             return
 
@@ -276,7 +277,8 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
             try:
                 stdscr.addstr(
                     height - 1, round(width/2)-30,
-                    "[p] show path  [r] regenerate  [s] save  [q] quit",
+                    "[p] show path  [r] regenerate  [s] save "
+                    " [a] animate solver  [q] quit",
                     curses.A_BOLD)
             except curses.error:
                 pass
@@ -288,6 +290,11 @@ def runviewer(stdscr: curses.window, make_mazegen: Callable[[], MazeGenerator],
                     show_path = not show_path
                 case r if r == ord('r'):
                     break
+                case a if a == ord('a'):
+                    solver_anim = not solver_anim
+                    solve_result = solve(
+                        mazegen.grid, mazegen.entry, mazegen.exits,
+                        solve_on_step if solver_anim else None)
                 case s if s == ord('s'):
                     save_output(mazegen, output_file)
 
