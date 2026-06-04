@@ -216,10 +216,10 @@ def runviewer(
                 case r if r == ord('r'):
                     break
                 case a if a == ord('a'):
-                    solver_anim = not solver_anim
+
                     solve_result = solve(
                         mazegen.grid, mazegen.entry, mazegen.exits,
-                        solve_on_step if solver_anim else None,
+                        solve_on_step,
                     )
                     path_anim(stdscr, mazegen, path)
                 case s if s == ord('s'):
