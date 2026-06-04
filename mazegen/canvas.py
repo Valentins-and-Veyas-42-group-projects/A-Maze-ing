@@ -94,33 +94,45 @@ def _draw_cell(
             canvas[wy][wx] = OPEN
 
 
-def _fill_pillars(
-    canvas: list[list[int]], rows: int, cols: int, wall: int
+def _update_pillar_slot(
+    canvas: list[list[int]], px: int, py: int
 ) -> None:
-    """Fill wall-junction pillars based on their four neighboring slots.
+    """Recompute the color of a single pillar slot from its four neighbors.
+
+    No-ops if the slot is out of bounds or any neighbor is WALL (pillar
+    stays WALL). Otherwise assigns PATH, VISITED, or OPEN by priority.
+    """
+    height = len(canvas)
+    width = len(canvas[0]) if canvas else 0
+    if py <= 0 or py >= height - 1 or px <= 0 or px >= width - 1:
+        return
+    slots = (
+        canvas[py - 1][px],
+        canvas[py + 1][px],
+        canvas[py][px - 1],
+        canvas[py][px + 1],
+    )
+    if any(s == WALL for s in slots):
+        return
+    if all(s == PATH for s in slots):
+        canvas[py][px] = PATH
+    elif all(s in (VISITED, PATH) for s in slots):
+        canvas[py][px] = VISITED
+    else:
+        canvas[py][px] = OPEN
+
+
+def _fill_pillars(
+    canvas: list[list[int]], rows: int, cols: int
+) -> None:
+    """Fill all wall-junction pillars by delegating to _update_pillar_slot.
 
     A pillar at position (2x+2, 2y+2) sits at the corner between four
-    cells. If none of its neighbors are walls it inherits the color of
-    surrounding open slots, preferring PATH > VISITED > OPEN.
+    cells and inherits the color of its open neighbors.
     """
     for y in range(rows - 1):
         for x in range(cols - 1):
-            px = 2 * x + 2
-            py = 2 * y + 2
-            slots = (
-                canvas[py - 1][px],
-                canvas[py + 1][px],
-                canvas[py][px - 1],
-                canvas[py][px + 1],
-            )
-            if any(s == wall for s in slots):
-                continue
-            if all(s == PATH for s in slots):
-                canvas[py][px] = PATH
-            elif all(s in (VISITED, PATH) for s in slots):
-                canvas[py][px] = VISITED
-            else:
-                canvas[py][px] = OPEN
+            _update_pillar_slot(canvas, 2 * x + 2, 2 * y + 2)
 
 
 def _draw_logo_border(
@@ -180,10 +192,39 @@ def build_canvas(
                 _path_cells, _path_edges, entry, exits,
                 _logo_cells, animating, visited_cells, frontier_cells,
             )
-    _fill_pillars(canvas, rows, cols, WALL)
+    _fill_pillars(canvas, rows, cols)
     _draw_logo_border(canvas, _logo_cells, WALL)
     if cursor is not None:
         cx, cy = cursor
         if 0 <= cy < rows and 0 <= cx < cols:
             canvas[2 * cy + 1][2 * cx + 1] = CURSOR
     return canvas
+
+
+def apply_path_step(
+    canvas: list[list[int]],
+    from_cell: Cell,
+    to_cell: Cell,
+) -> None:
+    """Incrementally paint one step of a path onto an existing canvas.
+
+    Sets the wall slot between from_cell and to_cell to PATH, sets the
+    to_cell slot to PATH (preserving ENTRY/EXIT if already set), then
+    updates the two pillar slots that flank the new wall slot.
+    """
+    fx, fy = from_cell
+    tx, ty = to_cell
+    dx, dy = tx - fx, ty - fy
+
+    wx, wy = 2 * fx + 1 + dx, 2 * fy + 1 + dy
+    canvas[wy][wx] = PATH
+
+    if canvas[2 * ty + 1][2 * tx + 1] not in (ENTRY, EXIT):
+        canvas[2 * ty + 1][2 * tx + 1] = PATH
+
+    if dx != 0:
+        _update_pillar_slot(canvas, wx, wy - 1)
+        _update_pillar_slot(canvas, wx, wy + 1)
+    else:
+        _update_pillar_slot(canvas, wx - 1, wy)
+        _update_pillar_slot(canvas, wx + 1, wy)

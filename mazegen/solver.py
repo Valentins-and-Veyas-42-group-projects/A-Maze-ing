@@ -128,6 +128,68 @@ def validate_path(grid: Grid, path: str,
     return Ok(None)
 
 
+def solve_dfs(
+    grid: Grid,
+    entry: Cell,
+    exits: Cell,
+    on_step: Callable[[set[Cell], set[Cell]], None] | None = None,
+) -> Ok[str] | Err[MazeError]:
+    """Solve the maze with DFS and return directions as a string.
+
+    If ``on_step`` is provided it is called after each cell is dequeued with
+    the current sets of fully-processed cells and queued-but-unprocessed cells,
+    enabling step-by-step visualisation of the search frontier.
+    """
+
+    width = len(grid[0]) if grid else 0
+    height = len(grid)
+    x, y = entry
+
+    if not is_inbounds(x, y, width, height):
+        return Err(MazeError.INVALID_ENTRY)
+    exit_x, exit_y = exits
+    if not is_inbounds(exit_x, exit_y, width, height):
+        return Err(MazeError.INVALID_EXIT)
+
+    visited = [[False for _ in range(width)] for _ in range(height)]
+    came_from: dict[Cell, Cell] = {}
+    stack: list[tuple[int, int]] = [entry]
+    visited[y][x] = True
+
+    visited_set: set[Cell] = set()
+    frontier_set: set[Cell] = {entry}
+
+    while stack:
+        x, y = stack.pop()
+        frontier_set.discard((x, y))
+        visited_set.add((x, y))
+
+        if on_step is not None:
+            on_step(visited_set, frontier_set)
+
+        if (x, y) == exits:
+            return Ok(_path_to_directions(came_from, entry, exits))
+
+        for direction in Direction:
+            dx, dy = DIRECTION_DELTAS[direction]
+            nx = x + dx
+            ny = y + dy
+
+            if not is_inbounds(nx, ny, width, height):
+                continue
+            if grid[y][x] & (1 << direction.value):
+                continue
+            if visited[ny][nx]:
+                continue
+
+            visited[ny][nx] = True
+            came_from[(nx, ny)] = (x, y)
+            frontier_set.add((nx, ny))
+            stack.append((nx, ny))
+
+    return Err(MazeError.NO_PATH_FOUND)
+
+
 def _path_to_directions(
     came_from: dict[Cell, Cell],
     entry: Cell,

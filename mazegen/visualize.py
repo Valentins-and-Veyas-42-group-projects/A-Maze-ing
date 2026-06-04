@@ -4,12 +4,12 @@ import curses
 import random
 from collections.abc import Callable
 
-from .canvas import PALETTE, WALL, build_canvas, rgb_to_curses
+from .canvas import PALETTE, WALL, apply_path_step, build_canvas, rgb_to_curses
 from .errors import Err
 from .generator import MazeGenerator
 from .output import save_output
-from .shared import Cell, Edge, DIRECTION_DELTAS, LETTER_TO_DIRECTION
-from .solver import path_to_edges, solve, validate_path
+from .shared import Cell, DIRECTION_DELTAS, LETTER_TO_DIRECTION
+from .solver import path_to_edges, solve, solve_dfs, validate_path
 
 
 def setup_colors() -> None:
@@ -71,29 +71,23 @@ def path_anim(
 ) -> None:
     """Animate the solution path step by step on the screen.
 
-    Walks each direction letter in path, appending the next cell and
-    edge to the running sets and redrawing after every step so the path
-    visibly grows from entry to exit.
+    Builds the base canvas once, then per step updates only the new
+    cell slot, wall slot, and adjacent pillar slots via apply_path_step,
+    avoiding a full canvas rebuild on every frame.
     """
-    path_cells_so_far: set[Cell] = set()
-    path_edges_so_far: set[Edge] = set()
+    canvas = build_canvas(
+        mazegen.grid, mazegen.entry, mazegen.exits,
+        set(mazegen.logo_cells),
+    )
     x, y = mazegen.entry
-    path_cells_so_far.add((x, y))
 
     for letter in path:
         direction = LETTER_TO_DIRECTION[letter]
         dx, dy = DIRECTION_DELTAS[direction]
         nx, ny = x + dx, y + dy
-        path_edges_so_far.add(((x, y), (nx, ny)))
-        path_edges_so_far.add(((nx, ny), (x, y)))
-        path_cells_so_far.add((nx, ny))
+        apply_path_step(canvas, (x, y), (nx, ny))
         x, y = nx, ny
         stdscr.erase()
-        canvas = build_canvas(
-            mazegen.grid, mazegen.entry, mazegen.exits,
-            set(mazegen.logo_cells), None,
-            path_cells_so_far, path_edges_so_far,
-        )
         blit(stdscr, canvas)
         stdscr.refresh()
 
@@ -116,12 +110,14 @@ def runviewer(
         p — toggle solution path overlay
         r — regenerate maze
         s — save maze to output_file
-        a — toggle solver animation and replay path animation
+        a — replay solver animation with current algorithm
+        d — toggle solver algorithm between BFS and DFS
         c — randomize wall color
         q — quit
     """
     setup_colors()
     curses.curs_set(0)
+    use_dfs = False
 
     while True:
         mazegen = make_mazegen()
@@ -169,7 +165,8 @@ def runviewer(
             blit(stdscr, solve_canvas)
             stdscr.refresh()
 
-        solve_result = solve(
+        active_solver = solve_dfs if use_dfs else solve
+        solve_result = active_solver(
             mazegen.grid, mazegen.entry, mazegen.exits,
             solve_on_step if solver_anim else None,
         )
@@ -198,11 +195,12 @@ def runviewer(
                 )
             blit(stdscr, canvas)
             height, width = stdscr.getmaxyx()
+            alg_label = "DFS" if use_dfs else "BFS"
             try:
                 stdscr.addstr(
-                    height - 1, round(width / 2) - 30,
-                    "[p] show path  [r] regenerate  [s] save"
-                    "  [a] animate solver  [q] quit",
+                    height - 1, round(width / 2) - 36,
+                    f"[p] path  [r] regen  [s] save  [a] anim"
+                    f"  [d] solver:{alg_label}  [q] quit",
                     curses.A_BOLD,
                 )
             except curses.error:
@@ -216,12 +214,23 @@ def runviewer(
                 case r if r == ord('r'):
                     break
                 case a if a == ord('a'):
-
-                    solve_result = solve(
+                    active_solver = solve_dfs if use_dfs else solve
+                    solve_result = active_solver(
                         mazegen.grid, mazegen.entry, mazegen.exits,
                         solve_on_step,
                     )
                     path_anim(stdscr, mazegen, path)
+                case d if d == ord('d'):
+                    use_dfs = not use_dfs
+                    active_solver = solve_dfs if use_dfs else solve
+                    solve_result = active_solver(
+                        mazegen.grid, mazegen.entry, mazegen.exits,
+                    )
+                    if isinstance(solve_result, Err):
+                        continue
+                    path = solve_result.value
+                    path_cells, path_edges = path_to_edges(
+                        path, mazegen.entry)
                 case s if s == ord('s'):
                     save_output(mazegen, output_file)
                 case c if c == ord('c'):
