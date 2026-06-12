@@ -163,7 +163,20 @@ This produces `mazegen-*.whl` and `mazegen-*.tar.gz` in the `dist/` directory.
 
 ## Why these algorithms
 
-<!-- TODO: add your reasoning for choosing DFS as the primary algorithm and why Binary Tree and Prim's were added as bonuses -->
+We chose DFS as the first algorithm because we were already familiar with the 
+backtracking concept from BSQ and the tower game rush. Also it seemed like 
+the most efficent from inuition which isnt technically true but it is still 
+very efficient. Binary Tree was the second implemented algorithm primarily
+because of how easy it was to implement and the interesting patterns it produces.
+Prim's algorithm was the last one implemented because it seemed interesting. 
+It is pretty similar to DFS but when watching youtube videos on maze generation
+I liked how it looked.
+
+For solving we first implemented DFS because we already did it for generation so
+translating to a solver wasnt difficult. It worked fine on perfect mazes but 
+when we implemented imperfect mazes we saw that it does not always find the 
+shortest path which is required in the subject. Thats why we implemented BFS next
+as the primary solver which always finds the shortest path in imperfected mazes.
 
 ---
 
@@ -175,6 +188,19 @@ This produces `mazegen-*.whl` and `mazegen-*.tar.gz` in the `dist/` directory.
 
 ## Resources
 
-<!-- TODO: add references (articles, wikipedia pages, videos) you used to learn about maze generation and solving -->
+BFS explanation: https://www.geeksforgeeks.org/python/python-program-for-breadth-first-search-or-bfs-for-a-graph/
+DFS explanation: https://www.geeksforgeeks.org/python/python-program-for-depth-first-search-or-dfs-for-a-graph/
+Video with different algs: https://www.youtube.com/watch?v=cQVH4gcb3O4&t=4s
+Another Video with algs: https://www.youtube.com/watch?v=sVcB8vUFlmU
+Curses documentation: https://www.w3schools.com/python/ref_module_curses.asp
+Curses tutorial: https://codedrome.substack.com/p/an-introduction-to-curses-in-python
 
-**AI usage:** <!-- TODO: describe which parts of the project AI was used for and how -->
+
+
+### AI usage
+
+In the beginning we used AI for a simple visualizer to help understand what all 
+the changes to the code where doing. That code was removed when the visualizer 
+was rewritten by hand. AI was used for refactoring the code and adding docstrings
+to some methods and functions. We tried to keep AI usage low to learn more in the end.
+No AI code was used in this project.
