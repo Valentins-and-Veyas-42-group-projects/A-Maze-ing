@@ -6,7 +6,7 @@ ANIMATION = True
 ALGORITHM = 1
 SEED = demo
 SHOW_PATH = True
-SPEED = 100
+SPEED = 6
 
 # --- SECTION 2: SYNTAX & DELIMITER ERRORS ---
 # Uncomment below to trigger: ERR_INVALID_SYNTAX (Missing delimiter)

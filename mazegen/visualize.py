@@ -118,22 +118,39 @@ def runviewer(
     setup_colors()
     curses.curs_set(0)
     use_dfs = False
+    speed_skip = 6  # steps between renders; lower = slower, higher = faster
 
     while True:
         mazegen = make_mazegen()
         step_count = 0
 
         def on_step() -> None:
-            nonlocal step_count
+            nonlocal step_count, speed_skip
             step_count += 1
-            if step_count % 6 != 0:
+            if step_count % speed_skip != 0:
                 return
+            stdscr.nodelay(True)
+            key = stdscr.getch()
+            stdscr.nodelay(False)
+            if key == ord('.'):
+                speed_skip = min(256, speed_skip + 1)
+            elif key == ord(','):
+                speed_skip = max(1, speed_skip - 1)
             stdscr.erase()
             anim_canvas = build_canvas(
                 mazegen.grid, mazegen.entry, mazegen.exits, None,
                 mazegen.cursor, None, None, True,
             )
             blit(stdscr, anim_canvas)
+            height, width = stdscr.getmaxyx()
+            hint = f"[,] slower  [.] faster  (speed: {speed_skip})"
+            try:
+                stdscr.addstr(
+                    height - 1, max(0, round(width / 2) - len(hint) // 2),
+                    hint, curses.A_BOLD,
+                )
+            except curses.error:
+                pass
             stdscr.refresh()
 
         if alge == 1:
@@ -152,10 +169,17 @@ def runviewer(
         def solve_on_step(
             visited: set[Cell], frontier: set[Cell]
         ) -> None:
-            nonlocal solve_step_count
+            nonlocal solve_step_count, speed_skip
             solve_step_count += 1
-            if solve_step_count % 4 != 0:
+            if solve_step_count % speed_skip != 0:
                 return
+            stdscr.nodelay(True)
+            key = stdscr.getch()
+            stdscr.nodelay(False)
+            if key == ord('.'):
+                speed_skip = min(256, speed_skip + 1)
+            elif key == ord(','):
+                speed_skip = max(1, speed_skip - 1)
             stdscr.erase()
             solve_canvas = build_canvas(
                 mazegen.grid, mazegen.entry, mazegen.exits,
@@ -163,6 +187,15 @@ def runviewer(
                 False, visited, frontier,
             )
             blit(stdscr, solve_canvas)
+            height, width = stdscr.getmaxyx()
+            hint = f"[,] slower  [.] faster  (speed: {speed_skip})"
+            try:
+                stdscr.addstr(
+                    height - 1, max(0, round(width / 2) - len(hint) // 2),
+                    hint, curses.A_BOLD,
+                )
+            except curses.error:
+                pass
             stdscr.refresh()
 
         active_solver = solve_dfs if use_dfs else solve
@@ -196,11 +229,14 @@ def runviewer(
             blit(stdscr, canvas)
             height, width = stdscr.getmaxyx()
             alg_label = "DFS" if use_dfs else "BFS"
+            hint = (
+                f"[p] path  [r] regen  [s] save  [a] anim"
+                f"  [d] solver:{alg_label}  [,/.] speed  [q] quit"
+            )
             try:
                 stdscr.addstr(
-                    height - 1, round(width / 2) - 36,
-                    f"[p] path  [r] regen  [s] save  [a] anim"
-                    f"  [d] solver:{alg_label}  [q] quit",
+                    height - 1, max(0, round(width / 2) - len(hint) // 2),
+                    hint,
                     curses.A_BOLD,
                 )
             except curses.error:
@@ -231,6 +267,10 @@ def runviewer(
                     path = solve_result.value
                     path_cells, path_edges = path_to_edges(
                         path, mazegen.entry)
+                case dot if dot == ord('.'):
+                    speed_skip = min(256, speed_skip + 1)
+                case comma if comma == ord(','):
+                    speed_skip = max(1, speed_skip - 1)
                 case s if s == ord('s'):
                     save_output(mazegen, output_file)
                 case c if c == ord('c'):

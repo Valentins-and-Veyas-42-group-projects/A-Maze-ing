@@ -112,7 +112,7 @@ The config file uses `KEY = VALUE` pairs, one per line. Lines starting with `#` 
 | `SEED` | str | None | Seed for reproducible generation |
 | `ANIMATION` | True/False | False | Animate generation step by step |
 | `SHOW_PATH` | True/False | False | Show solution path on start |
-| `SPEED` | int > 0 | 1 | Animation speed |
+| `SPEED` | int > 0 | 1 | Animation speed the number dictates how many frames are skipped during animation|
 | `FORCE_WAIT_TIME` | float > 0 | 0.5 | Seconds between animation frames |
 | `WALL_COLOR` | R,G,B | None | Wall color as 0-255 RGB values |
 | `VERBOSE` | True/False | False | Enable verbose output |
@@ -182,9 +182,19 @@ as the primary solver which always finds the shortest path in imperfected mazes.
 
 ## Team and project management
 
-<!-- TODO: fill in roles (who did what), your initial plan vs how it actually went, what worked well / what you'd do differently, and which tools you used -->
+### Roles:
+#### Valentin:
+Generation/Solving logic<br>
+Visualizer
+#### Veya:
+Parsing<br>
+Error handling<br>
+Testing<br>
 
----
+### Planning:
+
+TODO!!!
+
 
 ## Resources
 
