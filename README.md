@@ -198,12 +198,12 @@ TODO!!!
 
 ## Resources
 
-BFS explanation: https://www.geeksforgeeks.org/python/python-program-for-breadth-first-search-or-bfs-for-a-graph/
-DFS explanation: https://www.geeksforgeeks.org/python/python-program-for-depth-first-search-or-dfs-for-a-graph/
-Video with different algs: https://www.youtube.com/watch?v=cQVH4gcb3O4&t=4s
-Another Video with algs: https://www.youtube.com/watch?v=sVcB8vUFlmU
-Curses documentation: https://www.w3schools.com/python/ref_module_curses.asp
-Curses tutorial: https://codedrome.substack.com/p/an-introduction-to-curses-in-python
+BFS explanation: https://www.geeksforgeeks.org/python/python-program-for-breadth-first-search-or-bfs-for-a-graph/<br>
+DFS explanation: https://www.geeksforgeeks.org/python/python-program-for-depth-first-search-or-dfs-for-a-graph/<br>
+Video with different algs: https://www.youtube.com/watch?v=cQVH4gcb3O4&t=4s<br>
+Another Video with algs: https://www.youtube.com/watch?v=sVcB8vUFlmU<br>
+Curses documentation: https://www.w3schools.com/python/ref_module_curses.asp<br>
+Curses tutorial: https://codedrome.substack.com/p/an-introduction-to-curses-in-python<br>
 
 
 
