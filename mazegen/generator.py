@@ -43,8 +43,7 @@ class MazeGenerator:
     def init_grid(self, value: int) -> Grid:
         """Build a grid with all walls intact and return it."""
 
-        self.grid = [[value for _ in range(self.width)]
-                     for _ in range(self.height)]
+        self.grid = [[value for _ in range(self.width)] for _ in range(self.height)]
         return self.grid
 
     def _no_wall(self, x: int, y: int, direction: Direction) -> bool:
@@ -72,8 +71,7 @@ class MazeGenerator:
                     return False
         return True
 
-    def would_make_open_sqr(self, x: int, y: int,
-                            direction: Direction) -> bool:
+    def would_make_open_sqr(self, x: int, y: int, direction: Direction) -> bool:
         """Return True if removing this wall opens a 3x3 block."""
 
         result = False
@@ -98,23 +96,17 @@ class MazeGenerator:
         candidates = []
         for y in range(self.height):
             for x in range(self.width):
-                if x+1 < self.width and not (
-                    (x, y) in logo or (x + 1, y) in logo
-                ):
+                if x + 1 < self.width and not ((x, y) in logo or (x + 1, y) in logo):
                     candidates.append((x, y, Direction.EAST))
-                if y+1 < self.height and not (
-                    (x, y) in logo or (x, y + 1) in logo
-                ):
+                if y + 1 < self.height and not ((x, y) in logo or (x, y + 1) in logo):
                     candidates.append((x, y, Direction.SOUTH))
-        count: int = round(len(candidates)*0.25)
+        count: int = round(len(candidates) * 0.25)
         samples = random.sample(candidates, count)
-        for (xx, yy, direction) in samples:
+        for xx, yy, direction in samples:
             if not self.would_make_open_sqr(xx, yy, direction):
                 self.remove_wall(xx, yy, direction)
 
-    def bin_tree(self,
-                 on_step: Callable[[], None] | None = None
-                 ) -> Ok[None] | Err[MazeError]:
+    def bin_tree(self, on_step: Callable[[], None] | None = None) -> Ok[None] | Err[MazeError]:
         """Carve the maze with the binary tree algorithm.
 
         Each cell removes either its north or east wall, biasing the
@@ -145,8 +137,7 @@ class MazeGenerator:
                 for direction in (Direction.NORTH, Direction.EAST):
                     dx, dy = DIRECTION_DELTAS[direction]
                     nx, ny = x + dx, y + dy
-                    if (is_inbounds(nx, ny, self.width, self.height)
-                            and (nx, ny) not in logo):
+                    if is_inbounds(nx, ny, self.width, self.height) and (nx, ny) not in logo:
                         options.append(direction)
                 if options:
                     self.remove_wall(x, y, random.choice(options))
@@ -159,17 +150,14 @@ class MazeGenerator:
 
         return Ok(None)
 
-    def generate(self,
-                 on_step: Callable[[], None] | None = None
-                 ) -> Ok[None] | Err[MazeError]:
+    def generate(self, on_step: Callable[[], None] | None = None) -> Ok[None] | Err[MazeError]:
         """Carve the maze in place via iterative randomized DFS."""
 
         check = self._validate()
         if isinstance(check, Err):
             return check
 
-        visited = [[False for _ in range(self.width)]
-                   for _ in range(self.height)]
+        visited = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.init_grid(15)
         pattern = select_pattern(self.width, self.height)
         logo_cells = pattern.placed_cells(self.width, self.height)
@@ -190,9 +178,11 @@ class MazeGenerator:
                 dx, dy = DIRECTION_DELTAS[direction]
                 nx = x + dx
                 ny = y + dy
-                if (is_inbounds(nx, ny, self.width, self.height)
-                        and not visited[ny][nx]
-                        and (nx, ny)not in self.logo_cells):
+                if (
+                    is_inbounds(nx, ny, self.width, self.height)
+                    and not visited[ny][nx]
+                    and (nx, ny) not in self.logo_cells
+                ):
                     candidates.append((direction, nx, ny))
 
             if candidates:
@@ -211,15 +201,13 @@ class MazeGenerator:
         return Ok(None)
 
     def prims_algorithm(
-            self,
-            on_step: Callable[[], None] | None = None
+        self, on_step: Callable[[], None] | None = None
     ) -> Ok[None] | Err[MazeError]:
         check = self._validate()
         if isinstance(check, Err):
             return check
 
-        visited = [[False for _ in range(self.width)]
-                   for _ in range(self.height)]
+        visited = [[False for _ in range(self.width)] for _ in range(self.height)]
         self.init_grid(15)
         pattern = select_pattern(self.width, self.height)
         logo_cells = pattern.placed_cells(self.width, self.height)
@@ -237,9 +225,11 @@ class MazeGenerator:
             dx, dy = DIRECTION_DELTAS[direction]
             nx = x + dx
             ny = y + dy
-            if (is_inbounds(nx, ny, self.width, self.height)
-                    and not visited[ny][nx]
-                    and (nx, ny)not in self.logo_cells):
+            if (
+                is_inbounds(nx, ny, self.width, self.height)
+                and not visited[ny][nx]
+                and (nx, ny) not in self.logo_cells
+            ):
                 frontier.append((nx, ny))
         while frontier:
             visited_neighbors = []
@@ -254,8 +244,9 @@ class MazeGenerator:
                 dx, dy = DIRECTION_DELTAS[direction]
                 nx = fx + dx
                 ny = fy + dy
-                if not (is_inbounds(nx, ny, self.width, self.height)
-                        and (nx, ny) not in self.logo_cells):
+                if not (
+                    is_inbounds(nx, ny, self.width, self.height) and (nx, ny) not in self.logo_cells
+                ):
                     continue
                 if visited[ny][nx]:
                     visited_neighbors.append((direction, nx, ny))
@@ -295,7 +286,7 @@ class MazeGenerator:
         """Stamp the logo into the grid and return its cells."""
 
         cells = pattern.placed_cells(self.width, self.height)
-        for (x, y) in cells:
+        for x, y in cells:
             self.grid[y][x] = 15
         return cells
 
@@ -313,12 +304,12 @@ class MazeGenerator:
 
     def add_wall(self, x: int, y: int, direction: Direction) -> None:
         """Add the wall between cell (x, y) and its neighbor."""
-        self.grid[y][x] |= (1 << direction.value)
+        self.grid[y][x] |= 1 << direction.value
         dx, dy = DIRECTION_DELTAS[direction]
         nx = x + dx
         ny = y + dy
         opposite = (direction.value + 2) % 4
-        self.grid[ny][nx] |= (1 << opposite)
+        self.grid[ny][nx] |= 1 << opposite
 
     def solver(self) -> Ok[str] | Err[MazeError]:
         """Solve this maze and return directions from entry to exit."""

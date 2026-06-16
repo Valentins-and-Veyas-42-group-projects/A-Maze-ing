@@ -16,5 +16,4 @@ def test_solver_path_is_valid_for_generated_maze() -> None:
     assert isinstance(result, Ok)
     path = cast(str, result.value)
 
-    assert not isinstance(validate_path(
-        maze.grid, path, maze.entry, maze.exits), Err)
+    assert not isinstance(validate_path(maze.grid, path, maze.entry, maze.exits), Err)

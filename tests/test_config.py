@@ -40,14 +40,15 @@ def assert_config_error(
     return result.diagnostic
 
 
-def test_parse_config_accepts_required_and_optional_values(tmp_path: Path) -> None:
+def test_parse_config_accepts_required_and_optional_values(
+    tmp_path: Path,
+) -> None:
     result = parse_text(
         tmp_path,
         valid_config(
             "VERBOSE = True\n"
             "ANIMATION = True\n"
             "SHOW_PATH = True\n"
-            "FORCE_WAIT_TIME = 1.25\n"
             "SPEED = 4\n"
             "ALGORITHM = 2\n"
             "SEED = fixed-seed\n"
@@ -74,7 +75,9 @@ def test_parse_config_accepts_required_and_optional_values(tmp_path: Path) -> No
     )
 
 
-def test_parse_config_uses_defaults_for_optional_values(tmp_path: Path) -> None:
+def test_parse_config_uses_defaults_for_optional_values(
+    tmp_path: Path,
+) -> None:
     result = parse_text(tmp_path, valid_config())
 
     assert isinstance(result, Ok)
@@ -94,7 +97,11 @@ def test_parse_config_uses_defaults_for_optional_values(tmp_path: Path) -> None:
         ("WIDTH = zero", ConfigError.ERR_INVALID_WIDTH, "WIDTH must be"),
         ("HEIGHT = -1", ConfigError.ERR_INVALID_HEIGHT, "HEIGHT must be"),
         ("SPEED = 0", ConfigError.ERR_INVALID_SPEED, "SPEED must be"),
-        ("ALGORITHM = 4", ConfigError.ERR_INVALID_ALGORITHM, "ALGORITHM must be"),
+        (
+            "ALGORITHM = 4",
+            ConfigError.ERR_INVALID_ALGORITHM,
+            "ALGORITHM must be",
+        ),
     ],
 )
 def test_parse_config_rejects_non_positive_integers(
@@ -133,7 +140,11 @@ def test_parse_config_rejects_invalid_booleans(
     ("line", "error", "help_text"),
     [
         ("ENTRY = 0,", ConfigError.ERR_INVALID_ENTRY, "Missing coordinate"),
-        ("ENTRY = 0,zero", ConfigError.ERR_INVALID_ENTRY, "Expected an integer"),
+        (
+            "ENTRY = 0,zero",
+            ConfigError.ERR_INVALID_ENTRY,
+            "Expected an integer",
+        ),
         ("EXIT = 1,2,3", ConfigError.ERR_INVALID_EXIT, "exactly one comma"),
     ],
 )
@@ -163,19 +174,10 @@ def test_parse_config_rejects_invalid_output_files(
 ) -> None:
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
-    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_OUTPUT_FILE)
+    diagnostic = assert_config_error(
+        result, ConfigError.ERR_INVALID_OUTPUT_FILE
+    )
     assert help_text in str(diagnostic.help_msg)
-
-
-@pytest.mark.parametrize("line", ["FORCE_WAIT_TIME = slow", "FORCE_WAIT_TIME = -0.1"])
-def test_parse_config_rejects_invalid_force_wait_time(
-    tmp_path: Path,
-    line: str,
-) -> None:
-    result = parse_text(tmp_path, valid_config(f"{line}\n"))
-
-    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_FORCE_WAIT_TIME)
-    assert "positive float" in str(diagnostic.help_msg)
 
 
 @pytest.mark.parametrize(
@@ -193,7 +195,9 @@ def test_parse_config_rejects_invalid_wall_color(
 ) -> None:
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
-    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_WALL_COLOR)
+    diagnostic = assert_config_error(
+        result, ConfigError.ERR_INVALID_WALL_COLOR
+    )
     assert help_text in str(diagnostic.help_msg)
 
 
@@ -215,17 +219,24 @@ def test_parse_config_reports_missing_required_keys(tmp_path: Path) -> None:
     result = parse_text(tmp_path, valid_config().replace("WIDTH = 20\n", ""))
 
     diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_SYNTAX)
-    assert diagnostic.help_msg == "Missing mandatory configuration options: WIDTH"
+    assert (
+        diagnostic.help_msg == "Missing mandatory configuration options: WIDTH"
+    )
 
 
 def test_parse_config_suggests_known_key_for_typos(tmp_path: Path) -> None:
     result = parse_text(tmp_path, valid_config("SPED = 5\n"))
 
     diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_SYNTAX)
-    assert diagnostic.help_msg == "Unknown configuration key 'SPED'. Did you mean 'SPEED'?"
+    assert (
+        diagnostic.help_msg
+        == "Unknown configuration key 'SPED'. Did you mean 'SPEED'?"
+    )
 
 
-def test_parse_config_returns_file_not_found_for_missing_file(tmp_path: Path) -> None:
+def test_parse_config_returns_file_not_found_for_missing_file(
+    tmp_path: Path,
+) -> None:
     result = parse_config(str(tmp_path / "missing.txt"))
 
     assert isinstance(result, Err)

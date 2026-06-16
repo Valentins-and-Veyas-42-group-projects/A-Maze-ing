@@ -32,7 +32,6 @@ class ConfigError(Enum):
     ERR_FILE_NOT_FOUND = auto()
     ERR_INVALID_PERFECT = auto()
     ERR_INVALID_VERBOSE = auto()
-    ERR_INVALID_FORCE_WAIT_TIME = auto()
     ERR_INVALID_SPEED = auto()
     ERR_INVALID_ALGORITHM = auto()
     ERR_INVALID_WALL_COLOR = auto()
@@ -72,7 +71,7 @@ class Err(Generic[E]):
 
     def print_diagnostic(self) -> None:
         """Prints a rust-style diagnostic message
-          with dynamic caret alignment."""
+        with dynamic caret alignment."""
         RED = "\033[1;31m"
         PINK = "\033[1;35m"
         BLUE = "\033[1;34m"
@@ -89,8 +88,7 @@ class Err(Generic[E]):
         if not self.diagnostic:
             print(f" {RED}×{RESET} {BOLD}Operation failed{RESET}")
             print(
-                f"   {RED}╰─▶{RESET} "
-                f"{err_name_str.replace('ERR_', '').replace('_', ' ').title()}"
+                f"   {RED}╰─▶{RESET} {err_name_str.replace('ERR_', '').replace('_', ' ').title()}"
             )
             return
 

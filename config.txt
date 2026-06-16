@@ -3,58 +3,9 @@ HEIGHT =50
 OUTPUT_FILE = maze.txt
 PERFECT = False
 ANIMATION = True
-ALGORITHM = 1
+ALGORITHM = PRIM
 SEED = demo
 SHOW_PATH = True
 SPEED = 6
-
-# --- SECTION 2: SYNTAX & DELIMITER ERRORS ---
-# Uncomment below to trigger: ERR_INVALID_SYNTAX (Missing delimiter)
-#WIDTH twenty
-
-# Uncomment below to trigger: ERR_INVALID_SYNTAX (Unknown token namespace)
-#UNKNOWN_KEY = 999
-#WIDTHH = twenty
-
-
-# --- SECTION 3: INTEGER VALIDATIONS (WIDTH / HEIGHT) ---
-# Uncomment below to trigger: ERR_INVALID_WIDTH (Alpha chars instead of Int)
-# WIDTH = twenty
-
-# Uncomment below to trigger: ERR_INVALID_WIDTH (Negative layout bounds checking)
-# WIDTH = -5
-
-
-# --- SECTION 4: COORDINATE VALIDATIONS (ENTRY / EXIT) ---
-# Valid defaults to leave running when errors are off:
 ENTRY = 0,0
-EXIT = 55,42
-
-# Uncomment below to trigger: ERR_INVALID_ENTRY (Missing a coordinate element)
-# ENTRY = 0,
-
-# Uncomment below to trigger: ERR_INVALID_ENTRY (String element injection)
-# ENTRY = 0,zero
-
-# Uncomment below to trigger: ERR_INVALID_EXIT (Dimensional overload / too many dimensions)
-# EXIT = 19,14,5
-
-
-# --- SECTION 5: FILENAME FILEPATH SANITIZATION ---
-# Uncomment below to trigger: ERR_INVALID_OUTPUT_FILE (Empty variable state allocation)
-# OUTPUT_FILE = 
-
-# Uncomment below to trigger: ERR_INVALID_OUTPUT_FILE (Directory escape hazard characters)
-# OUTPUT_FILE = /etc/secret/sys_maze*.txt
-
-
-# --- SECTION 6: FLOATING POINT DATA TYPES ---
-# Valid default to leave running when errors are off:
-FORCE_WAIT_TIME = 0.5
-WALL_COLOR = 184,2,44
-
-# Uncomment below to trigger: ERR_INVALID_FORCE_WAIT_TIME (Alpha parsing failure)
-# FORCE_WAIT_TIME = slow
-
-# Uncomment below to trigger: ERR_INVALID_FORCE_WAIT_TIME (Negative bounds violation)
-# FORCE_WAIT_TIME = -0.25
+EXIT = 67,69

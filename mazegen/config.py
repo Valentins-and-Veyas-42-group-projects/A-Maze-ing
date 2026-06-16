@@ -40,7 +40,6 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
         "VERBOSE",
         "ANIMATION",
         "SHOW_PATH",
-        "FORCE_WAIT_TIME",
         "SPEED",
         "ALGORITHM",
         "SEED",
@@ -100,13 +99,86 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
         val = val_part.strip()
 
         match key:
-            case "WIDTH" | "HEIGHT" | "SPEED" | "ALGORITHM":
+            case "ALGORITHM":
+                algorithm_names = {"DFS": 1, "BINARY": 2, "PRIM": 3}
+
+                if val.isdigit():
+                    int_val = int(val)
+
+                    if int_val not in (1, 2, 3):
+                        start_col = raw_line.find(val)
+
+                        diag = Diagnostic(
+                            filename=config_file,
+                            line_num=idx,
+                            line_text=raw_line,
+                            col_start=start_col,
+                            col_end=start_col + len(val),
+                            help_msg="ALGORITHM must be 1 for DFS, 2 for "
+                            + "binary tree, or 3 for Prim's",
+                        )
+
+                        return Err(ConfigError.ERR_INVALID_ALGORITHM, diag)
+
+                    parsed_values[key] = int_val
+                    required_keys.discard(key)
+                    config.algorithm = int_val
+
+                elif val.upper() in algorithm_names:
+                    int_val = algorithm_names[val.upper()]
+
+                    parsed_values[key] = int_val
+                    required_keys.discard(key)
+                    config.algorithm = int_val
+
+                else:
+                    start_col = raw_line.find(val)
+
+                    max_allowed_distance = min(3, max(1, int(len(val) * 0.4)))
+                    best_match, dist = min(
+                        (
+                            (
+                                name,
+                                levenshteinRecursive(
+                                    val.upper(), name, len(val), len(name)
+                                ),
+                            )
+                            for name in algorithm_names
+                        ),
+                        key=lambda item: (
+                            item[1],
+                            -_common_prefix_len(val.upper(), item[0]),
+                            abs(len(val) - len(item[0])),
+                            item[0],
+                        ),
+                    )
+
+                    if dist <= max_allowed_distance:
+                        help_msg = (
+                            f"Invalid ALGORITHM value '{val}'. Did you mean '{best_match}'? "
+                            "(valid values: 1/DFS, 2/BINARY, 3/PRIM)"
+                        )
+                    else:
+                        help_msg = (
+                            "ALGORITHM must be 1 for DFS, 2 for binary tree, 3 for Prim's, "
+                            f"or the name DFS/BINARY/PRIM; got '{val}'"
+                        )
+
+                    diag = Diagnostic(
+                        filename=config_file,
+                        line_num=idx,
+                        line_text=raw_line,
+                        col_start=start_col,
+                        col_end=start_col + len(val),
+                        help_msg=help_msg,
+                    )
+
+                    return Err(ConfigError.ERR_INVALID_ALGORITHM, diag)
+            case "WIDTH" | "HEIGHT" | "SPEED":
                 try:
                     int_val = int(val)
 
                     if int_val <= 0:
-                        raise ValueError
-                    if key == "ALGORITHM" and int_val not in (1, 2, 3):
                         raise ValueError
 
                     parsed_values[key] = int_val
@@ -116,17 +188,12 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         config.width = int_val
                     elif key == "HEIGHT":
                         config.height = int_val
-                    elif key == "ALGORITHM":
-                        config.algorithm = int_val
                     else:
                         config.speed = int_val
 
                 except ValueError:
                     start_col = raw_line.find(val)
                     help_msg = f"{key} must be a positive integer (e.g., '20')"
-                    if key == "ALGORITHM":
-                        help_msg = "ALGORITHM must be 1 for DFS, " \
-                            "2 for binary tree, or 3 for Prim's"
 
                     diag = Diagnostic(
                         filename=config_file,
@@ -141,7 +208,6 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         "WIDTH": ConfigError.ERR_INVALID_WIDTH,
                         "HEIGHT": ConfigError.ERR_INVALID_HEIGHT,
                         "SPEED": ConfigError.ERR_INVALID_SPEED,
-                        "ALGORITHM": ConfigError.ERR_INVALID_ALGORITHM,
                     }
                     return Err(int_errors[key], diag)
 
@@ -214,8 +280,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                             col_start=start_col,
                             col_end=start_col + len(part_stripped),
                             help_msg=(
-                                "Expected an integer, found invalid "
-                                f"characters: '{part_stripped}'"
+                                f"Expected an integer, found invalid characters: '{part_stripped}'"
                             ),
                         )
 
@@ -275,8 +340,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         col_start=start_col,
                         col_end=start_col + 1,
                         help_msg=(
-                            "OUTPUT_FILE contains invalid "
-                            f"character: '{val[first_bad]}'"
+                            f"OUTPUT_FILE contains invalid character: '{val[first_bad]}'"
                         ),
                     )
 
@@ -341,38 +405,6 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                 else:
                     config.show_path = val == "True"
 
-            case "FORCE_WAIT_TIME":
-                try:
-                    wait_time = float(val)
-
-                    if wait_time <= 0:
-                        raise ValueError
-
-                    parsed_values["FORCE_WAIT_TIME"] = wait_time
-                    required_keys.discard("FORCE_WAIT_TIME")
-
-                    config.force_wait_time = wait_time
-
-                except ValueError:
-                    start_col = raw_line.find(val)
-
-                    diag = Diagnostic(
-                        filename=config_file,
-                        line_num=idx,
-                        line_text=raw_line,
-                        col_start=start_col,
-                        col_end=start_col + len(val),
-                        help_msg=(
-                            "FORCE_WAIT_TIME must be a "
-                            "positive float (e.g., '0.5')"
-                        ),
-                    )
-
-                    return Err(
-                        ConfigError.ERR_INVALID_FORCE_WAIT_TIME,
-                        diag,
-                    )
-
             case "WALL_COLOR":
                 parts = [part.strip() for part in val.split(",")]
                 if len(parts) != 3:
@@ -384,8 +416,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + len(val),
-                        help_msg="WALL_COLOR must contain three "
-                        "RGB integers (e.g., '184,2,44')",
+                        help_msg="WALL_COLOR must contain three RGB integers (e.g., '184,2,44')",
                     )
 
                     return Err(ConfigError.ERR_INVALID_WALL_COLOR, diag)
@@ -403,8 +434,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + len(val),
-                        help_msg="WALL_COLOR channels must be"
-                        " integers from 0 to 255",
+                        help_msg="WALL_COLOR channels must be integers from 0 to 255",
                     )
 
                     return Err(ConfigError.ERR_INVALID_WALL_COLOR, diag)
@@ -427,8 +457,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                     ),
                 )
                 if dist <= max_allowed_distance:
-                    help_msg = f"Unknown configuration "\
-                        f"key '{key}'. Did you mean '{best_match}'?"
+                    help_msg = f"Unknown configuration key '{key}'. Did you mean '{best_match}'?"
                 else:
                     help_msg = f"Unknown configuration key '{key}'"
 

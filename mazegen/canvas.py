@@ -1,6 +1,6 @@
 """Maze canvas building — pure cell-to-color mapping, no curses."""
 
-from .shared import Cell, Edge, Grid, DIRECTION_DELTAS
+from .shared import DIRECTION_DELTAS, Cell, Edge, Grid
 
 WALL = 1
 OPEN = 2
@@ -94,9 +94,7 @@ def _draw_cell(
             canvas[wy][wx] = OPEN
 
 
-def _update_pillar_slot(
-    canvas: list[list[int]], px: int, py: int
-) -> None:
+def _update_pillar_slot(canvas: list[list[int]], px: int, py: int) -> None:
     """Recompute the color of a single pillar slot from its four neighbors.
 
     No-ops if the slot is out of bounds or any neighbor is WALL (pillar
@@ -122,9 +120,7 @@ def _update_pillar_slot(
         canvas[py][px] = OPEN
 
 
-def _fill_pillars(
-    canvas: list[list[int]], rows: int, cols: int
-) -> None:
+def _fill_pillars(canvas: list[list[int]], rows: int, cols: int) -> None:
     """Fill all wall-junction pillars by delegating to _update_pillar_slot.
 
     A pillar at position (2x+2, 2y+2) sits at the corner between four
@@ -135,13 +131,11 @@ def _fill_pillars(
             _update_pillar_slot(canvas, 2 * x + 2, 2 * y + 2)
 
 
-def _draw_logo_border(
-    canvas: list[list[int]], logo_cells: set[Cell], wall: int
-) -> None:
+def _draw_logo_border(canvas: list[list[int]], logo_cells: set[Cell], wall: int) -> None:
     """Recolor wall slots adjacent to logo cells with the border shade."""
     height = len(canvas)
     width = len(canvas[0]) if canvas else 0
-    for (x, y) in logo_cells:
+    for x, y in logo_cells:
         cx = 2 * x + 1
         cy = 2 * y + 1
         for ox in (-1, 0, 1):
@@ -182,15 +176,22 @@ def build_canvas(
     _path_edges = path_edges or set()
     _logo_cells = logo_cells or set()
 
-    canvas: list[list[int]] = [
-        [WALL for _ in range(canvas_width)] for _ in range(canvas_height)
-    ]
+    canvas: list[list[int]] = [[WALL for _ in range(canvas_width)] for _ in range(canvas_height)]
     for y in range(rows):
         for x in range(cols):
             _draw_cell(
-                canvas, grid[y][x], x, y,
-                _path_cells, _path_edges, entry, exits,
-                _logo_cells, animating, visited_cells, frontier_cells,
+                canvas,
+                grid[y][x],
+                x,
+                y,
+                _path_cells,
+                _path_edges,
+                entry,
+                exits,
+                _logo_cells,
+                animating,
+                visited_cells,
+                frontier_cells,
             )
     _fill_pillars(canvas, rows, cols)
     _draw_logo_border(canvas, _logo_cells, WALL)

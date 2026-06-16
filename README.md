@@ -113,7 +113,6 @@ The config file uses `KEY = VALUE` pairs, one per line. Lines starting with `#` 
 | `ANIMATION` | True/False | False | Animate generation step by step |
 | `SHOW_PATH` | True/False | False | Show solution path on start |
 | `SPEED` | int > 0 | 1 | Animation speed the number dictates how many frames are skipped during animation|
-| `FORCE_WAIT_TIME` | float > 0 | 0.5 | Seconds between animation frames |
 | `WALL_COLOR` | R,G,B | None | Wall color as 0-255 RGB values |
 | `VERBOSE` | True/False | False | Enable verbose output |
 

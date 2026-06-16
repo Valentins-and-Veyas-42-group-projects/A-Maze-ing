@@ -48,9 +48,16 @@ def main() -> None:
         print("Usage: main.py config.txt")
         return
 
-    curses.wrapper(lambda stdscr: runviewer(
-        stdscr, lambda: _build_maze(config, True), config.algorithm,
-        config.show_path, config.output_file, config.animation))
+    curses.wrapper(
+        lambda stdscr: runviewer(
+            stdscr,
+            lambda: _build_maze(config, True),
+            config.algorithm,
+            config.show_path,
+            config.output_file,
+            config.animation,
+        )
+    )
 
 
 if __name__ == "__main__":

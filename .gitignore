@@ -33,3 +33,4 @@ pip-wheel-metadata/
 *.swp
 en.subject.pdf
 output.txt
+*.lock
