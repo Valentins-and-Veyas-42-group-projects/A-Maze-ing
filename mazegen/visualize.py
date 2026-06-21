@@ -21,10 +21,25 @@ def setup_colors() -> None:
     """
     curses.start_color()
     curses.use_default_colors()
+
+    can_change = curses.can_change_color()
+
     for k, v in PALETTE.items():
-        conv = rgb_to_curses(v)
-        curses.init_color(k, *conv)
-        curses.init_pair(k, -1, k)
+        if can_change:
+            conv = rgb_to_curses(v)
+            try:
+                curses.init_color(k, *conv)
+            except curses.error:
+                # Fallback if init_color fails despite can_change_color()
+                pass
+
+        # If we can't change colors, k will just use the default terminal colors
+        # for indices 1-10, which might not match our palette but won't crash.
+        try:
+            curses.init_pair(k, -1, k)
+        except curses.error:
+            # Some terminals might have very few color pairs
+            pass
 
 
 def blit(stdscr: curses.window, canvas: list[list[int]]) -> None:
@@ -67,9 +82,7 @@ def blit(stdscr: curses.window, canvas: list[list[int]]) -> None:
             sx += run
 
 
-def path_anim(
-    stdscr: curses.window, mazegen: MazeGenerator, path: str
-) -> None:
+def path_anim(stdscr: curses.window, mazegen: MazeGenerator, path: str) -> None:
     """Animate the solution path step by step on the screen.
 
     Builds the base canvas once, then per step updates only the new
@@ -127,7 +140,7 @@ def runviewer(
         mazegen = make_mazegen()
         step_count = 0
 
-        def on_step() -> None:
+        def on_step(mazegen: MazeGenerator = mazegen) -> None:
             nonlocal step_count, speed_skip
             step_count += 1
             if step_count % speed_skip != 0:
@@ -167,18 +180,20 @@ def runviewer(
         if alge == 1:
             gen_result = mazegen.generate(on_step if animation else None)
         elif alge == 3:
-            gen_result = mazegen.prims_algorithm(
-                on_step if animation else None
-            )
+            gen_result = mazegen.prims_algorithm(on_step if animation else None)
         else:
             gen_result = mazegen.bin_tree(on_step if animation else None)
 
         if isinstance(gen_result, Err):
-            return
+            raise RuntimeError(f"Generation failed: {gen_result.error.name}")
 
         solve_step_count = 0
 
-        def solve_on_step(visited: set[Cell], frontier: set[Cell]) -> None:
+        def solve_on_step(
+            visited: set[Cell],
+            frontier: set[Cell],
+            mazegen: MazeGenerator = mazegen,
+        ) -> None:
             nonlocal solve_step_count, speed_skip
             solve_step_count += 1
             if solve_step_count % speed_skip != 0:
@@ -225,14 +240,12 @@ def runviewer(
             solve_on_step if solver_anim else None,
         )
         if isinstance(solve_result, Err):
-            return
+            raise RuntimeError(f"Solver failed: {solve_result.error.name}")
 
         path = solve_result.value
-        validation = validate_path(
-            mazegen.grid, path, mazegen.entry, mazegen.exits
-        )
+        validation = validate_path(mazegen.grid, path, mazegen.entry, mazegen.exits)
         if isinstance(validation, Err):
-            return
+            raise RuntimeError(f"Path validation failed: {validation.error.name}")
         path_cells, path_edges = path_to_edges(path, mazegen.entry)
 
         while True:
@@ -306,9 +319,13 @@ def runviewer(
                 case s if s == ord("s"):
                     save_output(mazegen, output_file)
                 case c if c == ord("c"):
-                    col: tuple[int, int, int] = (
-                        random.randint(0, 255),
-                        random.randint(0, 255),
-                        random.randint(0, 255),
-                    )
-                    curses.init_color(WALL, *rgb_to_curses(col))
+                    if curses.can_change_color():
+                        col: tuple[int, int, int] = (
+                            random.randint(0, 255),
+                            random.randint(0, 255),
+                            random.randint(0, 255),
+                        )
+                        try:
+                            curses.init_color(WALL, *rgb_to_curses(col))
+                        except curses.error:
+                            pass

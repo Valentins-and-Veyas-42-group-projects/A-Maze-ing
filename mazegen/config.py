@@ -37,7 +37,6 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
         "EXIT",
         "OUTPUT_FILE",
         "PERFECT",
-        "VERBOSE",
         "ANIMATION",
         "SHOW_PATH",
         "SPEED",
@@ -139,9 +138,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         (
                             (
                                 name,
-                                levenshteinRecursive(
-                                    val.upper(), name, len(val), len(name)
-                                ),
+                                levenshteinRecursive(val.upper(), name, len(val), len(name)),
                             )
                             for name in algorithm_names
                         ),
@@ -327,9 +324,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                 found_invalid = [c for c in val if c in invalid_chars]
 
                 if found_invalid:
-                    first_bad = next(
-                        i for i, c in enumerate(val) if c in invalid_chars
-                    )
+                    first_bad = next(i for i, c in enumerate(val) if c in invalid_chars)
 
                     start_col = raw_line.find(val) + first_bad
 
@@ -339,9 +334,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + 1,
-                        help_msg=(
-                            f"OUTPUT_FILE contains invalid character: '{val[first_bad]}'"
-                        ),
+                        help_msg=(f"OUTPUT_FILE contains invalid character: '{val[first_bad]}'"),
                     )
 
                     return Err(
@@ -372,7 +365,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                 parsed_values["SEED"] = val
                 config.seed = val
 
-            case "PERFECT" | "VERBOSE" | "ANIMATION" | "SHOW_PATH":
+            case "PERFECT" | "ANIMATION" | "SHOW_PATH":
                 if val not in ("True", "False"):
                     start_col = raw_line.find(val)
 
@@ -387,9 +380,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
 
                     bool_errors = {
                         "PERFECT": ConfigError.ERR_INVALID_PERFECT,
-                        "VERBOSE": ConfigError.ERR_INVALID_VERBOSE,
-                        "ANIMATION": ConfigError.ERR_INVALID_VERBOSE,
-                        "SHOW_PATH": ConfigError.ERR_INVALID_VERBOSE,
+                        "ANIMATION": ConfigError.ERR_INVALID_ANIMATION,
+                        "SHOW_PATH": ConfigError.ERR_INVALID_SHOW_PATH,
                     }
                     return Err(bool_errors[key], diag)
 
@@ -398,8 +390,6 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
 
                 if key == "PERFECT":
                     config.perfect = val == "True"
-                elif key == "VERBOSE":
-                    config.verbose = val == "True"
                 elif key == "ANIMATION":
                     config.animation = val == "True"
                 else:
@@ -445,10 +435,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                 start_col = 0
                 max_allowed_distance = min(3, max(1, int(len(key) * 0.4)))
                 best_match, dist = min(
-                    (
-                        (k, levenshteinRecursive(key, k, len(key), len(k)))
-                        for k in valid_keys
-                    ),
+                    ((k, levenshteinRecursive(key, k, len(key), len(k))) for k in valid_keys),
                     key=lambda item: (
                         item[1],
                         -_common_prefix_len(key, item[0]),
@@ -480,9 +467,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
             line_text=lines[-1] if lines else "",
             col_start=0,
             col_end=1,
-            help_msg=(
-                f"Missing mandatory configuration options: {missing_str}"
-            ),
+            help_msg=(f"Missing mandatory configuration options: {missing_str}"),
         )
 
         return Err(ConfigError.ERR_INVALID_SYNTAX, diag)
@@ -490,9 +475,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
     return Ok(config)
 
 
-def levenshteinRecursive(
-    str1: str, str2: str, len_str1: int, len_str2: int
-) -> int:
+def levenshteinRecursive(str1: str, str2: str, len_str1: int, len_str2: int) -> int:
     """Calculates the Levenshtein distance between two strings recursively."""
     if len_str1 == 0:
         return len_str2

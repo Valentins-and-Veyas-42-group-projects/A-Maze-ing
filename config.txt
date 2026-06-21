@@ -8,4 +8,4 @@ SEED = demo
 SHOW_PATH = True
 SPEED = 6
 ENTRY = 0,0
-EXIT = 67,69
+EXIT = 67,49

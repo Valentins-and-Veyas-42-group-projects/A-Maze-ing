@@ -3,7 +3,8 @@ UV ?= uv
 PIP ?= $(PYTHON) -m pip
 VENV ?= .venv
 VENV_PYTHON = $(VENV)/bin/python
-MAIN ?= main.py
+MAIN ?= a_maze_ing.py
+ARGS ?= config.txt
 
 MYPY_FLAGS = --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 FLAKE8_FLAGS = --max-line-length=100 --exclude=.venv,.git,__pycache__,.mypy_cache,.ruff_cache,.pytest_cache,.ty
@@ -32,16 +33,16 @@ install-pip:
 
 run:
 	@if command -v $(UV) >/dev/null 2>&1; then \
-		$(UV) run python $(MAIN); \
+		$(UV) run python $(MAIN) $(ARGS); \
 	else \
-		$(VENV_PYTHON) $(MAIN); \
+		$(VENV_PYTHON) $(MAIN) $(ARGS); \
 	fi
 
 debug:
 	@if command -v $(UV) >/dev/null 2>&1; then \
-		$(UV) run python -m pdb $(MAIN); \
+		$(UV) run python -m pdb $(MAIN) $(ARGS); \
 	else \
-		$(VENV_PYTHON) -m pdb $(MAIN); \
+		$(VENV_PYTHON) -m pdb $(MAIN) $(ARGS); \
 	fi
 
 clean:

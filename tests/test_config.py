@@ -46,7 +46,6 @@ def test_parse_config_accepts_required_and_optional_values(
     result = parse_text(
         tmp_path,
         valid_config(
-            "VERBOSE = True\n"
             "ANIMATION = True\n"
             "SHOW_PATH = True\n"
             "SPEED = 4\n"
@@ -64,10 +63,10 @@ def test_parse_config_accepts_required_and_optional_values(
         exits=(19, 14),
         output_file="maze.txt",
         perfect=True,
-        verbose=True,
+        verbose=False,
         animation=True,
         show_path=True,
-        force_wait_time=1.25,
+        force_wait_time=0.5,
         speed=4,
         algorithm=2,
         seed="fixed-seed",
@@ -120,9 +119,8 @@ def test_parse_config_rejects_non_positive_integers(
     ("line", "error"),
     [
         ("PERFECT = yes", ConfigError.ERR_INVALID_PERFECT),
-        ("VERBOSE = yes", ConfigError.ERR_INVALID_VERBOSE),
-        ("ANIMATION = yes", ConfigError.ERR_INVALID_VERBOSE),
-        ("SHOW_PATH = yes", ConfigError.ERR_INVALID_VERBOSE),
+        ("ANIMATION = yes", ConfigError.ERR_INVALID_ANIMATION),
+        ("SHOW_PATH = yes", ConfigError.ERR_INVALID_SHOW_PATH),
     ],
 )
 def test_parse_config_rejects_invalid_booleans(
@@ -174,9 +172,7 @@ def test_parse_config_rejects_invalid_output_files(
 ) -> None:
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
-    diagnostic = assert_config_error(
-        result, ConfigError.ERR_INVALID_OUTPUT_FILE
-    )
+    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_OUTPUT_FILE)
     assert help_text in str(diagnostic.help_msg)
 
 
@@ -195,9 +191,7 @@ def test_parse_config_rejects_invalid_wall_color(
 ) -> None:
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
-    diagnostic = assert_config_error(
-        result, ConfigError.ERR_INVALID_WALL_COLOR
-    )
+    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_WALL_COLOR)
     assert help_text in str(diagnostic.help_msg)
 
 
@@ -219,19 +213,14 @@ def test_parse_config_reports_missing_required_keys(tmp_path: Path) -> None:
     result = parse_text(tmp_path, valid_config().replace("WIDTH = 20\n", ""))
 
     diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_SYNTAX)
-    assert (
-        diagnostic.help_msg == "Missing mandatory configuration options: WIDTH"
-    )
+    assert diagnostic.help_msg == "Missing mandatory configuration options: WIDTH"
 
 
 def test_parse_config_suggests_known_key_for_typos(tmp_path: Path) -> None:
     result = parse_text(tmp_path, valid_config("SPED = 5\n"))
 
     diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_SYNTAX)
-    assert (
-        diagnostic.help_msg
-        == "Unknown configuration key 'SPED'. Did you mean 'SPEED'?"
-    )
+    assert diagnostic.help_msg == "Unknown configuration key 'SPED'. Did you mean 'SPEED'?"
 
 
 def test_parse_config_returns_file_not_found_for_missing_file(
