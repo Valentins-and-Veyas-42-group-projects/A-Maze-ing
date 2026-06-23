@@ -4,7 +4,9 @@ version = "0.2.0"
 description = ""
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pytest>=9.1.1",
+]
 
 [project.optional-dependencies]
 dev = ["flake8", "mypy", "pyright", "ruff", "ty", "pytest"]
@@ -21,7 +23,7 @@ include = ["mazegen*"]
 exclude = ["tests*"]
 
 [tool.ruff]
-line-length = 100
+line-length = 79
 target-version = "py310"
 
 [tool.ruff.lint]

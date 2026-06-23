@@ -15,6 +15,7 @@ def test_solver_path_is_valid_for_generated_maze() -> None:
     result = solve(maze.grid, maze.entry, maze.exits)
     assert isinstance(result, Ok)
     path = result.value
+    assert isinstance(path, str)
 
     assert not isinstance(
         validate_path(maze.grid, path, maze.entry, maze.exits), Err
@@ -30,6 +31,7 @@ def test_solver_dfs_path_is_valid_for_generated_maze() -> None:
     result = solve_dfs(maze.grid, maze.entry, maze.exits)
     assert isinstance(result, Ok)
     path = result.value
+    assert isinstance(path, str)
 
     assert not isinstance(
         validate_path(maze.grid, path, maze.entry, maze.exits), Err

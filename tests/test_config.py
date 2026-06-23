@@ -80,14 +80,16 @@ def test_parse_config_uses_defaults_for_optional_values(
     result = parse_text(tmp_path, valid_config())
 
     assert isinstance(result, Ok)
-    assert result.value.verbose is False
-    assert result.value.animation is False
-    assert result.value.show_path is False
-    assert result.value.force_wait_time == 0.5
-    assert result.value.speed == 1
-    assert result.value.algorithm == 1
-    assert result.value.seed is None
-    assert result.value.wall_color is None
+    config = result.value
+    assert isinstance(config, Config)
+    assert config.verbose is False
+    assert config.animation is False
+    assert config.show_path is False
+    assert config.force_wait_time == 0.5
+    assert config.speed == 1
+    assert config.algorithm == 1
+    assert config.seed is None
+    assert config.wall_color is None
 
 
 @pytest.mark.parametrize(
@@ -173,7 +175,8 @@ def test_parse_config_rejects_invalid_output_files(
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
     diagnostic = assert_config_error(
-        result, ConfigError.ERR_INVALID_OUTPUT_FILE)
+        result, ConfigError.ERR_INVALID_OUTPUT_FILE
+    )
     assert help_text in str(diagnostic.help_msg)
 
 
@@ -193,7 +196,8 @@ def test_parse_config_rejects_invalid_wall_color(
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
     diagnostic = assert_config_error(
-        result, ConfigError.ERR_INVALID_WALL_COLOR)
+        result, ConfigError.ERR_INVALID_WALL_COLOR
+    )
     assert help_text in str(diagnostic.help_msg)
 
 

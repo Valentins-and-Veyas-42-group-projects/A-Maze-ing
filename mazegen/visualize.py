@@ -33,8 +33,6 @@ def setup_colors() -> None:
                 # Fallback if init_color fails despite can_change_color()
                 pass
 
-        # If we can't change colors, k uses the default terminal
-        # colors for 1-10; might not match our palette but won't crash.
         try:
             curses.init_pair(k, -1, k)
         except curses.error:
@@ -189,7 +187,7 @@ def runviewer(
             gen_result = mazegen.bin_tree(on_step if animation else None)
 
         if isinstance(gen_result, Err):
-            raise RuntimeError(f"Generation failed: {gen_result.error.name}")
+            raise RuntimeError(f"Generation failed: {gen_result.error_name}")
 
         solve_step_count = 0
 
@@ -244,7 +242,7 @@ def runviewer(
             solve_on_step if solver_anim else None,
         )
         if isinstance(solve_result, Err):
-            raise RuntimeError(f"Solver failed: {solve_result.error.name}")
+            raise RuntimeError(f"Solver failed: {solve_result.error_name}")
 
         path = solve_result.value
         validation = validate_path(
@@ -252,7 +250,7 @@ def runviewer(
         )
         if isinstance(validation, Err):
             raise RuntimeError(
-                f"Path validation failed: {validation.error.name}"
+                f"Path validation failed: {validation.error_name}"
             )
         path_cells, path_edges = path_to_edges(path, mazegen.entry)
 

@@ -70,6 +70,10 @@ class Err(Generic[E]):
     error: E
     diagnostic: Diagnostic | None = None
 
+    @property
+    def error_name(self) -> str:
+        return self.error.name
+
     def print_diagnostic(self) -> None:
         """Prints a rust-style diagnostic message
         with dynamic caret alignment."""

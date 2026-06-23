@@ -44,8 +44,7 @@ class MazeGenerator:
         """Build a grid with all walls intact and return it."""
 
         self.grid = [
-            [value for _ in range(self.width)]
-            for _ in range(self.height)
+            [value for _ in range(self.width)] for _ in range(self.height)
         ]
         return self.grid
 
@@ -101,14 +100,12 @@ class MazeGenerator:
         candidates = []
         for y in range(self.height):
             for x in range(self.width):
-                if (
-                    x + 1 < self.width
-                    and not ((x, y) in logo or (x + 1, y) in logo)
+                if x + 1 < self.width and not (
+                    (x, y) in logo or (x + 1, y) in logo
                 ):
                     candidates.append((x, y, Direction.EAST))
-                if (
-                    y + 1 < self.height
-                    and not ((x, y) in logo or (x, y + 1) in logo)
+                if y + 1 < self.height and not (
+                    (x, y) in logo or (x, y + 1) in logo
                 ):
                     candidates.append((x, y, Direction.SOUTH))
         count: int = round(len(candidates) * 0.25)
@@ -176,8 +173,7 @@ class MazeGenerator:
             return check
 
         visited = [
-            [False for _ in range(self.width)]
-            for _ in range(self.height)
+            [False for _ in range(self.width)] for _ in range(self.height)
         ]
         self.init_grid(15)
         pattern = select_pattern(self.width, self.height)
@@ -229,8 +225,7 @@ class MazeGenerator:
             return check
 
         visited = [
-            [False for _ in range(self.width)]
-            for _ in range(self.height)
+            [False for _ in range(self.width)] for _ in range(self.height)
         ]
         self.init_grid(15)
         pattern = select_pattern(self.width, self.height)

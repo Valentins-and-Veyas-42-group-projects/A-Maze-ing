@@ -139,8 +139,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                             (
                                 name,
                                 levenshteinRecursive(
-                                    val.upper(), name,
-                                    len(val), len(name),
+                                    val.upper(),
+                                    name,
+                                    len(val),
+                                    len(name),
                                 ),
                             )
                             for name in algorithm_names
@@ -282,9 +284,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                             col_start=start_col,
                             col_end=start_col + len(part_stripped),
                             help_msg=(
-                                "Expected an integer,"
-                                " found invalid characters:"
-                                f" '{part_stripped}'"
+                                f"Expected an integer, found invalid "
+                                f"characters: '{part_stripped}'"
                             ),
                         )
 
@@ -332,8 +333,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
 
                 if found_invalid:
                     first_bad = next(
-                        i for i, c in enumerate(val)
-                        if c in invalid_chars
+                        i for i, c in enumerate(val) if c in invalid_chars
                     )
 
                     start_col = raw_line.find(val) + first_bad
@@ -345,8 +345,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         col_start=start_col,
                         col_end=start_col + 1,
                         help_msg=(
-                            "OUTPUT_FILE contains invalid"
-                            f" character: '{val[first_bad]}'"
+                            f"OUTPUT_FILE contains invalid "
+                            f"character: '{val[first_bad]}'"
                         ),
                     )
 
@@ -420,8 +420,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         col_start=start_col,
                         col_end=start_col + len(val),
                         help_msg=(
-                            "WALL_COLOR must contain"
-                            " three RGB integers (e.g., '184,2,44')"
+                            "WALL_COLOR must contain three RGB"
+                            " integers (e.g., '184,2,44')"
                         ),
                     )
 
@@ -441,8 +441,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         col_start=start_col,
                         col_end=start_col + len(val),
                         help_msg=(
-                            "WALL_COLOR channels must be"
-                            " integers from 0 to 255"
+                            "WALL_COLOR channels must"
+                            " be integers from 0 to 255"
                         ),
                     )
 
@@ -466,10 +466,8 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                     ),
                 )
                 if dist <= max_allowed_distance:
-                    help_msg = (
-                        f"Unknown configuration key '{key}'."
-                        f" Did you mean '{best_match}'?"
-                    )
+                    help_msg = f"Unknown configuration key '{key}'."
+                    f"Did you mean '{best_match}'?"
                 else:
                     help_msg = f"Unknown configuration key '{key}'"
 
@@ -493,8 +491,7 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
             col_start=0,
             col_end=1,
             help_msg=(
-                "Missing mandatory configuration"
-                f" options: {missing_str}"
+                f"Missing mandatory configuration options: {missing_str}"
             ),
         )
 

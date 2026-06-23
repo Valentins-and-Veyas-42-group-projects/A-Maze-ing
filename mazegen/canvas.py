@@ -179,8 +179,7 @@ def build_canvas(
     _logo_cells = logo_cells or set()
 
     canvas: list[list[int]] = [
-        [WALL for _ in range(canvas_width)]
-        for _ in range(canvas_height)
+        [WALL for _ in range(canvas_width)] for _ in range(canvas_height)
     ]
     for y in range(rows):
         for x in range(cols):

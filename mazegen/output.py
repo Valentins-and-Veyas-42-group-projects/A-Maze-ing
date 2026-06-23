@@ -31,7 +31,7 @@ def save_output(mazegen: MazeGenerator, output_file: str) -> None:
 
     result = format_output(mazegen.grid, mazegen.entry, mazegen.exits)
     if isinstance(result, Err):
-        print(f"Error compiling layout: {result.error.name}")
+        print(f"Error compiling layout: {result.error_name}")
         return
     with open(output_file, "w") as f:
         _ = f.write(result)
