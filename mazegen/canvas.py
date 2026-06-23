@@ -131,7 +131,9 @@ def _fill_pillars(canvas: list[list[int]], rows: int, cols: int) -> None:
             _update_pillar_slot(canvas, 2 * x + 2, 2 * y + 2)
 
 
-def _draw_logo_border(canvas: list[list[int]], logo_cells: set[Cell], wall: int) -> None:
+def _draw_logo_border(
+    canvas: list[list[int]], logo_cells: set[Cell], wall: int
+) -> None:
     """Recolor wall slots adjacent to logo cells with the border shade."""
     height = len(canvas)
     width = len(canvas[0]) if canvas else 0
@@ -176,7 +178,10 @@ def build_canvas(
     _path_edges = path_edges or set()
     _logo_cells = logo_cells or set()
 
-    canvas: list[list[int]] = [[WALL for _ in range(canvas_width)] for _ in range(canvas_height)]
+    canvas: list[list[int]] = [
+        [WALL for _ in range(canvas_width)]
+        for _ in range(canvas_height)
+    ]
     for y in range(rows):
         for x in range(cols):
             _draw_cell(

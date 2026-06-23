@@ -43,7 +43,10 @@ class MazeGenerator:
     def init_grid(self, value: int) -> Grid:
         """Build a grid with all walls intact and return it."""
 
-        self.grid = [[value for _ in range(self.width)] for _ in range(self.height)]
+        self.grid = [
+            [value for _ in range(self.width)]
+            for _ in range(self.height)
+        ]
         return self.grid
 
     def _no_wall(self, x: int, y: int, direction: Direction) -> bool:
@@ -71,7 +74,9 @@ class MazeGenerator:
                     return False
         return True
 
-    def would_make_open_sqr(self, x: int, y: int, direction: Direction) -> bool:
+    def would_make_open_sqr(
+        self, x: int, y: int, direction: Direction
+    ) -> bool:
         """Return True if removing this wall opens a 3x3 block."""
 
         result = False
@@ -96,9 +101,15 @@ class MazeGenerator:
         candidates = []
         for y in range(self.height):
             for x in range(self.width):
-                if x + 1 < self.width and not ((x, y) in logo or (x + 1, y) in logo):
+                if (
+                    x + 1 < self.width
+                    and not ((x, y) in logo or (x + 1, y) in logo)
+                ):
                     candidates.append((x, y, Direction.EAST))
-                if y + 1 < self.height and not ((x, y) in logo or (x, y + 1) in logo):
+                if (
+                    y + 1 < self.height
+                    and not ((x, y) in logo or (x, y + 1) in logo)
+                ):
                     candidates.append((x, y, Direction.SOUTH))
         count: int = round(len(candidates) * 0.25)
         samples = random.sample(candidates, count)
@@ -106,7 +117,9 @@ class MazeGenerator:
             if not self.would_make_open_sqr(xx, yy, direction):
                 self.remove_wall(xx, yy, direction)
 
-    def bin_tree(self, on_step: Callable[[], None] | None = None) -> Ok[None] | Err[MazeError]:
+    def bin_tree(
+        self, on_step: Callable[[], None] | None = None
+    ) -> Ok[None] | Err[MazeError]:
         """Carve the maze with the binary tree algorithm.
 
         Each cell removes either its north or east wall, biasing the
@@ -137,7 +150,10 @@ class MazeGenerator:
                 for direction in (Direction.NORTH, Direction.EAST):
                     dx, dy = DIRECTION_DELTAS[direction]
                     nx, ny = x + dx, y + dy
-                    if is_inbounds(nx, ny, self.width, self.height) and (nx, ny) not in logo:
+                    if (
+                        is_inbounds(nx, ny, self.width, self.height)
+                        and (nx, ny) not in logo
+                    ):
                         options.append(direction)
                 if options:
                     self.remove_wall(x, y, random.choice(options))
@@ -150,14 +166,19 @@ class MazeGenerator:
 
         return Ok(None)
 
-    def generate(self, on_step: Callable[[], None] | None = None) -> Ok[None] | Err[MazeError]:
+    def generate(
+        self, on_step: Callable[[], None] | None = None
+    ) -> Ok[None] | Err[MazeError]:
         """Carve the maze in place via iterative randomized DFS."""
 
         check = self._validate()
         if isinstance(check, Err):
             return check
 
-        visited = [[False for _ in range(self.width)] for _ in range(self.height)]
+        visited = [
+            [False for _ in range(self.width)]
+            for _ in range(self.height)
+        ]
         self.init_grid(15)
         pattern = select_pattern(self.width, self.height)
         logo_cells = pattern.placed_cells(self.width, self.height)
@@ -207,7 +228,10 @@ class MazeGenerator:
         if isinstance(check, Err):
             return check
 
-        visited = [[False for _ in range(self.width)] for _ in range(self.height)]
+        visited = [
+            [False for _ in range(self.width)]
+            for _ in range(self.height)
+        ]
         self.init_grid(15)
         pattern = select_pattern(self.width, self.height)
         logo_cells = pattern.placed_cells(self.width, self.height)
@@ -245,7 +269,8 @@ class MazeGenerator:
                 nx = fx + dx
                 ny = fy + dy
                 if not (
-                    is_inbounds(nx, ny, self.width, self.height) and (nx, ny) not in self.logo_cells
+                    is_inbounds(nx, ny, self.width, self.height)
+                    and (nx, ny) not in self.logo_cells
                 ):
                     continue
                 if visited[ny][nx]:

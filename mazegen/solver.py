@@ -91,7 +91,9 @@ def path_to_edges(path: str, entry: Cell) -> tuple[set[Cell], set[Edge]]:
     return cells, edges
 
 
-def validate_path(grid: Grid, path: str, entry: Cell, exits: Cell) -> Ok[None] | Err[MazeError]:
+def validate_path(
+    grid: Grid, path: str, entry: Cell, exits: Cell
+) -> Ok[None] | Err[MazeError]:
     """Validate that a direction string
     reaches exits without crossing walls."""
 

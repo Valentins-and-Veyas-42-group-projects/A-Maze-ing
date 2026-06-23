@@ -33,8 +33,8 @@ def setup_colors() -> None:
                 # Fallback if init_color fails despite can_change_color()
                 pass
 
-        # If we can't change colors, k will just use the default terminal colors
-        # for indices 1-10, which might not match our palette but won't crash.
+        # If we can't change colors, k uses the default terminal
+        # colors for 1-10; might not match our palette but won't crash.
         try:
             curses.init_pair(k, -1, k)
         except curses.error:
@@ -82,7 +82,9 @@ def blit(stdscr: curses.window, canvas: list[list[int]]) -> None:
             sx += run
 
 
-def path_anim(stdscr: curses.window, mazegen: MazeGenerator, path: str) -> None:
+def path_anim(
+    stdscr: curses.window, mazegen: MazeGenerator, path: str
+) -> None:
     """Animate the solution path step by step on the screen.
 
     Builds the base canvas once, then per step updates only the new
@@ -180,7 +182,9 @@ def runviewer(
         if alge == 1:
             gen_result = mazegen.generate(on_step if animation else None)
         elif alge == 3:
-            gen_result = mazegen.prims_algorithm(on_step if animation else None)
+            gen_result = mazegen.prims_algorithm(
+                on_step if animation else None
+            )
         else:
             gen_result = mazegen.bin_tree(on_step if animation else None)
 
@@ -243,9 +247,13 @@ def runviewer(
             raise RuntimeError(f"Solver failed: {solve_result.error.name}")
 
         path = solve_result.value
-        validation = validate_path(mazegen.grid, path, mazegen.entry, mazegen.exits)
+        validation = validate_path(
+            mazegen.grid, path, mazegen.entry, mazegen.exits
+        )
         if isinstance(validation, Err):
-            raise RuntimeError(f"Path validation failed: {validation.error.name}")
+            raise RuntimeError(
+                f"Path validation failed: {validation.error.name}"
+            )
         path_cells, path_edges = path_to_edges(path, mazegen.entry)
 
         while True:

@@ -88,9 +88,8 @@ class Err(Generic[E]):
 
         if not self.diagnostic:
             print(f" {RED}×{RESET} {BOLD}Operation failed{RESET}")
-            print(
-                f"   {RED}╰─▶{RESET} {err_name_str.replace('ERR_', '').replace('_', ' ').title()}"
-            )
+            label = err_name_str.replace("ERR_", "").replace("_", " ").title()
+            print(f"   {RED}╰─▶{RESET} {label}")
             return
 
         d = self.diagnostic

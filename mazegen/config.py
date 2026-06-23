@@ -138,7 +138,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         (
                             (
                                 name,
-                                levenshteinRecursive(val.upper(), name, len(val), len(name)),
+                                levenshteinRecursive(
+                                    val.upper(), name,
+                                    len(val), len(name),
+                                ),
                             )
                             for name in algorithm_names
                         ),
@@ -152,13 +155,15 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
 
                     if dist <= max_allowed_distance:
                         help_msg = (
-                            f"Invalid ALGORITHM value '{val}'. Did you mean '{best_match}'? "
-                            "(valid values: 1/DFS, 2/BINARY, 3/PRIM)"
+                            f"Invalid ALGORITHM value '{val}'."
+                            f" Did you mean '{best_match}'?"
+                            " (valid values: 1/DFS, 2/BINARY, 3/PRIM)"
                         )
                     else:
                         help_msg = (
-                            "ALGORITHM must be 1 for DFS, 2 for binary tree, 3 for Prim's, "
-                            f"or the name DFS/BINARY/PRIM; got '{val}'"
+                            "ALGORITHM must be 1 for DFS,"
+                            " 2 for binary tree, 3 for Prim's,"
+                            f" or the name DFS/BINARY/PRIM; got '{val}'"
                         )
 
                     diag = Diagnostic(
@@ -277,7 +282,9 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                             col_start=start_col,
                             col_end=start_col + len(part_stripped),
                             help_msg=(
-                                f"Expected an integer, found invalid characters: '{part_stripped}'"
+                                "Expected an integer,"
+                                " found invalid characters:"
+                                f" '{part_stripped}'"
                             ),
                         )
 
@@ -324,7 +331,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                 found_invalid = [c for c in val if c in invalid_chars]
 
                 if found_invalid:
-                    first_bad = next(i for i, c in enumerate(val) if c in invalid_chars)
+                    first_bad = next(
+                        i for i, c in enumerate(val)
+                        if c in invalid_chars
+                    )
 
                     start_col = raw_line.find(val) + first_bad
 
@@ -334,7 +344,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + 1,
-                        help_msg=(f"OUTPUT_FILE contains invalid character: '{val[first_bad]}'"),
+                        help_msg=(
+                            "OUTPUT_FILE contains invalid"
+                            f" character: '{val[first_bad]}'"
+                        ),
                     )
 
                     return Err(
@@ -406,7 +419,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + len(val),
-                        help_msg="WALL_COLOR must contain three RGB integers (e.g., '184,2,44')",
+                        help_msg=(
+                            "WALL_COLOR must contain"
+                            " three RGB integers (e.g., '184,2,44')"
+                        ),
                     )
 
                     return Err(ConfigError.ERR_INVALID_WALL_COLOR, diag)
@@ -424,7 +440,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                         line_text=raw_line,
                         col_start=start_col,
                         col_end=start_col + len(val),
-                        help_msg="WALL_COLOR channels must be integers from 0 to 255",
+                        help_msg=(
+                            "WALL_COLOR channels must be"
+                            " integers from 0 to 255"
+                        ),
                     )
 
                     return Err(ConfigError.ERR_INVALID_WALL_COLOR, diag)
@@ -435,7 +454,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                 start_col = 0
                 max_allowed_distance = min(3, max(1, int(len(key) * 0.4)))
                 best_match, dist = min(
-                    ((k, levenshteinRecursive(key, k, len(key), len(k))) for k in valid_keys),
+                    (
+                        (k, levenshteinRecursive(key, k, len(key), len(k)))
+                        for k in valid_keys
+                    ),
                     key=lambda item: (
                         item[1],
                         -_common_prefix_len(key, item[0]),
@@ -444,7 +466,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
                     ),
                 )
                 if dist <= max_allowed_distance:
-                    help_msg = f"Unknown configuration key '{key}'. Did you mean '{best_match}'?"
+                    help_msg = (
+                        f"Unknown configuration key '{key}'."
+                        f" Did you mean '{best_match}'?"
+                    )
                 else:
                     help_msg = f"Unknown configuration key '{key}'"
 
@@ -467,7 +492,10 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
             line_text=lines[-1] if lines else "",
             col_start=0,
             col_end=1,
-            help_msg=(f"Missing mandatory configuration options: {missing_str}"),
+            help_msg=(
+                "Missing mandatory configuration"
+                f" options: {missing_str}"
+            ),
         )
 
         return Err(ConfigError.ERR_INVALID_SYNTAX, diag)
@@ -475,7 +503,9 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
     return Ok(config)
 
 
-def levenshteinRecursive(str1: str, str2: str, len_str1: int, len_str2: int) -> int:
+def levenshteinRecursive(
+    str1: str, str2: str, len_str1: int, len_str2: int
+) -> int:
     """Calculates the Levenshtein distance between two strings recursively."""
     if len_str1 == 0:
         return len_str2

@@ -90,7 +90,7 @@ def test_parse_config_uses_defaults_for_optional_values(
     assert result.value.wall_color is None
 
 
-@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
+@pytest.mark.parametrize(
     ("line", "error", "help_text"),
     [
         ("WIDTH = zero", ConfigError.ERR_INVALID_WIDTH, "WIDTH must be"),
@@ -115,7 +115,7 @@ def test_parse_config_rejects_non_positive_integers(
     assert help_text in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
+@pytest.mark.parametrize(
     ("line", "error"),
     [
         ("PERFECT = yes", ConfigError.ERR_INVALID_PERFECT),
@@ -134,7 +134,7 @@ def test_parse_config_rejects_invalid_booleans(
     assert "must be either 'True' or 'False'" in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
+@pytest.mark.parametrize(
     ("line", "error", "help_text"),
     [
         ("ENTRY = 0,", ConfigError.ERR_INVALID_ENTRY, "Missing coordinate"),
@@ -158,7 +158,7 @@ def test_parse_config_rejects_invalid_coordinates(
     assert help_text in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
+@pytest.mark.parametrize(
     ("line", "help_text"),
     [
         ("OUTPUT_FILE = ", "cannot be empty"),
@@ -172,11 +172,12 @@ def test_parse_config_rejects_invalid_output_files(
 ) -> None:
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
-    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_OUTPUT_FILE)
+    diagnostic = assert_config_error(
+        result, ConfigError.ERR_INVALID_OUTPUT_FILE)
     assert help_text in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
+@pytest.mark.parametrize(
     ("line", "help_text"),
     [
         ("WALL_COLOR = 1,2", "three RGB integers"),
@@ -191,7 +192,8 @@ def test_parse_config_rejects_invalid_wall_color(
 ) -> None:
     result = parse_text(tmp_path, valid_config(f"{line}\n"))
 
-    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_WALL_COLOR)
+    diagnostic = assert_config_error(
+        result, ConfigError.ERR_INVALID_WALL_COLOR)
     assert help_text in str(diagnostic.help_msg)
 
 
@@ -213,14 +215,18 @@ def test_parse_config_reports_missing_required_keys(tmp_path: Path) -> None:
     result = parse_text(tmp_path, valid_config().replace("WIDTH = 20\n", ""))
 
     diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_SYNTAX)
-    assert diagnostic.help_msg == "Missing mandatory configuration options: WIDTH"
+    assert diagnostic.help_msg == (
+        "Missing mandatory configuration options: WIDTH"
+    )
 
 
 def test_parse_config_suggests_known_key_for_typos(tmp_path: Path) -> None:
     result = parse_text(tmp_path, valid_config("SPED = 5\n"))
 
     diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_SYNTAX)
-    assert diagnostic.help_msg == "Unknown configuration key 'SPED'. Did you mean 'SPEED'?"
+    assert diagnostic.help_msg == (
+        "Unknown configuration key 'SPED'. Did you mean 'SPEED'?"
+    )
 
 
 def test_parse_config_returns_file_not_found_for_missing_file(
