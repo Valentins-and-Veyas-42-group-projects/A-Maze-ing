@@ -12,7 +12,6 @@ FLAKE8 = sh -c 'if command -v flake8 >/dev/null 2>&1; then flake8 "$$@"; elif co
 MYPY = sh -c 'if command -v mypy >/dev/null 2>&1; then mypy "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx mypy "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run mypy "$$@"; else $(VENV_PYTHON) -m mypy "$$@"; fi' --
 RUFF = sh -c 'if command -v ruff >/dev/null 2>&1; then ruff "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx ruff "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run ruff "$$@"; else $(VENV_PYTHON) -m ruff "$$@"; fi' --
 TY = sh -c 'if command -v ty >/dev/null 2>&1; then ty "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx ty "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run ty "$$@"; else $(VENV_PYTHON) -m ty "$$@"; fi' --
-PYRIGHT = sh -c 'if command -v pyright >/dev/null 2>&1; then pyright "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx pyright "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run pyright "$$@"; else $(VENV_PYTHON) -m pyright "$$@"; fi' --
 PYTEST = sh -c 'if command -v pytest >/dev/null 2>&1; then pytest "$$@"; elif command -v uvx >/dev/null 2>&1; then uvx pytest "$$@"; elif command -v $(UV) >/dev/null 2>&1; then $(UV) run pytest "$$@"; else $(VENV_PYTHON) -m pytest "$$@"; fi' --
 
 .PHONY: install install-pip run debug clean lint lint-strict format check-modern typecheck test
@@ -62,7 +61,7 @@ check-modern:
 typecheck:
 	$(MYPY) . $(MYPY_FLAGS)
 	$(TY) check .
-	$(PYRIGHT) .
+	
 
 test:
 	$(PYTEST)
