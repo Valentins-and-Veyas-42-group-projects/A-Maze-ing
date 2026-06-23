@@ -19,6 +19,7 @@ PYTEST = sh -c 'if command -v pytest >/dev/null 2>&1; then pytest "$$@"; elif co
 build: build-package
 
 build-package:
+	rm -rf dist build mazegen-*.whl mazegen-*.tar.gz
 	@if command -v $(UV) >/dev/null 2>&1; then \
 		$(UV) build; \
 	else \

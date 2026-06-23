@@ -69,6 +69,11 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
     except PermissionError:
         return Err(ConfigError.ERR_CANT_OPEN_FILE)
 
+    entry_line_num = 1
+    entry_line_text = ""
+    exit_line_num = 1
+    exit_line_text = ""
+
     for idx, raw_line in enumerate(lines, 1):
         stripped = raw_line.strip()
 
@@ -306,8 +311,12 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
 
                 if key == "ENTRY":
                     config.entry = coord_tuple
+                    entry_line_num = idx
+                    entry_line_text = raw_line
                 else:
                     config.exits = coord_tuple
+                    exit_line_num = idx
+                    exit_line_text = raw_line
 
             case "OUTPUT_FILE":
                 if not val:
@@ -498,6 +507,78 @@ def parse_config(config_file: str) -> Ok[Config] | Err[ConfigError]:
         )
 
         return Err(ConfigError.ERR_INVALID_SYNTAX, diag)
+
+    entry_x, entry_y = config.entry
+    if (
+        entry_x < 0
+        or entry_x >= config.width
+        or entry_y < 0
+        or entry_y >= config.height
+    ):
+        val_str = f"{entry_x},{entry_y}"
+        start_col = entry_line_text.find(val_str)
+        if start_col == -1:
+            start_col = entry_line_text.find("ENTRY") + 5
+            col_len = 5
+        else:
+            col_len = len(val_str)
+        diag = Diagnostic(
+            filename=config_file,
+            line_num=entry_line_num,
+            line_text=entry_line_text,
+            col_start=start_col,
+            col_end=start_col + col_len,
+            help_msg=(
+                f"ENTRY coordinate ({entry_x}, {entry_y}) is out of bounds "
+                f"for maze size {config.width}x{config.height}"
+            ),
+        )
+        return Err(ConfigError.ERR_INVALID_ENTRY, diag)
+
+    exit_x, exit_y = config.exits
+    if (
+        exit_x < 0
+        or exit_x >= config.width
+        or exit_y < 0
+        or exit_y >= config.height
+    ):
+        val_str = f"{exit_x},{exit_y}"
+        start_col = exit_line_text.find(val_str)
+        if start_col == -1:
+            start_col = exit_line_text.find("EXIT") + 4
+            col_len = 4
+        else:
+            col_len = len(val_str)
+        diag = Diagnostic(
+            filename=config_file,
+            line_num=exit_line_num,
+            line_text=exit_line_text,
+            col_start=start_col,
+            col_end=start_col + col_len,
+            help_msg=(
+                f"EXIT coordinate ({exit_x}, {exit_y}) is out of bounds "
+                f"for maze size {config.width}x{config.height}"
+            ),
+        )
+        return Err(ConfigError.ERR_INVALID_EXIT, diag)
+
+    if config.entry == config.exits:
+        val_str = f"{exit_x},{exit_y}"
+        start_col = exit_line_text.find(val_str)
+        if start_col == -1:
+            start_col = exit_line_text.find("EXIT") + 4
+            col_len = 4
+        else:
+            col_len = len(val_str)
+        diag = Diagnostic(
+            filename=config_file,
+            line_num=exit_line_num,
+            line_text=exit_line_text,
+            col_start=start_col,
+            col_end=start_col + col_len,
+            help_msg="EXIT coordinate cannot be the same as ENTRY coordinate",
+        )
+        return Err(ConfigError.ERR_INVALID_EXIT, diag)
 
     return Ok(config)
 

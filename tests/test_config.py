@@ -241,3 +241,49 @@ def test_parse_config_returns_file_not_found_for_missing_file(
     assert isinstance(result, Err)
     assert result.error is ConfigError.ERR_FILE_NOT_FOUND
     assert result.diagnostic is None
+
+
+def test_parse_config_rejects_out_of_bounds_entry(tmp_path: Path) -> None:
+    result = parse_text(
+        tmp_path, valid_config().replace("ENTRY = 0,0", "ENTRY = 20,0")
+    )
+    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_ENTRY)
+    assert "ENTRY coordinate (20, 0) is out of bounds" in str(
+        diagnostic.help_msg
+    )
+
+    result = parse_text(
+        tmp_path, valid_config().replace("ENTRY = 0,0", "ENTRY = 0,15")
+    )
+    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_ENTRY)
+    assert "ENTRY coordinate (0, 15) is out of bounds" in str(
+        diagnostic.help_msg
+    )
+
+
+def test_parse_config_rejects_out_of_bounds_exit(tmp_path: Path) -> None:
+    result = parse_text(
+        tmp_path, valid_config().replace("EXIT = 19,14", "EXIT = 20,14")
+    )
+    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_EXIT)
+    assert "EXIT coordinate (20, 14) is out of bounds" in str(
+        diagnostic.help_msg
+    )
+
+    result = parse_text(
+        tmp_path, valid_config().replace("EXIT = 19,14", "EXIT = 19,-1")
+    )
+    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_EXIT)
+    assert "EXIT coordinate (19, -1) is out of bounds" in str(
+        diagnostic.help_msg
+    )
+
+
+def test_parse_config_rejects_same_entry_and_exit(tmp_path: Path) -> None:
+    result = parse_text(
+        tmp_path, valid_config().replace("EXIT = 19,14", "EXIT = 0,0")
+    )
+    diagnostic = assert_config_error(result, ConfigError.ERR_INVALID_EXIT)
+    assert "EXIT coordinate cannot be the same as ENTRY coordinate" in str(
+        diagnostic.help_msg
+    )
