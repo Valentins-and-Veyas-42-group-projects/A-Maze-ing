@@ -1,7 +1,6 @@
 """Solver correctness tests."""
 
 import random
-from typing import cast
 
 from mazegen import Err, MazeGenerator, Ok, solve, validate_path
 from mazegen.solver import path_to_edges, solve_dfs
@@ -15,7 +14,7 @@ def test_solver_path_is_valid_for_generated_maze() -> None:
 
     result = solve(maze.grid, maze.entry, maze.exits)
     assert isinstance(result, Ok)
-    path = cast(str, result.value)
+    path = result.value
 
     assert not isinstance(
         validate_path(maze.grid, path, maze.entry, maze.exits), Err
@@ -30,7 +29,7 @@ def test_solver_dfs_path_is_valid_for_generated_maze() -> None:
 
     result = solve_dfs(maze.grid, maze.entry, maze.exits)
     assert isinstance(result, Ok)
-    path = cast(str, result.value)
+    path = result.value
 
     assert not isinstance(
         validate_path(maze.grid, path, maze.entry, maze.exits), Err

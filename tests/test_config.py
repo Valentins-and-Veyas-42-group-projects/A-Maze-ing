@@ -90,7 +90,7 @@ def test_parse_config_uses_defaults_for_optional_values(
     assert result.value.wall_color is None
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
     ("line", "error", "help_text"),
     [
         ("WIDTH = zero", ConfigError.ERR_INVALID_WIDTH, "WIDTH must be"),
@@ -115,7 +115,7 @@ def test_parse_config_rejects_non_positive_integers(
     assert help_text in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
     ("line", "error"),
     [
         ("PERFECT = yes", ConfigError.ERR_INVALID_PERFECT),
@@ -134,7 +134,7 @@ def test_parse_config_rejects_invalid_booleans(
     assert "must be either 'True' or 'False'" in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
     ("line", "error", "help_text"),
     [
         ("ENTRY = 0,", ConfigError.ERR_INVALID_ENTRY, "Missing coordinate"),
@@ -158,7 +158,7 @@ def test_parse_config_rejects_invalid_coordinates(
     assert help_text in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
     ("line", "help_text"),
     [
         ("OUTPUT_FILE = ", "cannot be empty"),
@@ -176,7 +176,7 @@ def test_parse_config_rejects_invalid_output_files(
     assert help_text in str(diagnostic.help_msg)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
     ("line", "help_text"),
     [
         ("WALL_COLOR = 1,2", "three RGB integers"),
