@@ -67,6 +67,3 @@ def main() -> None:
     except KeyboardInterrupt:
         _print_goodbye()
 
-
-if __name__ == "__main__":
-    main()
