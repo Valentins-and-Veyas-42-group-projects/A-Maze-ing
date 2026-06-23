@@ -66,4 +66,3 @@ def main() -> None:
         )
     except KeyboardInterrupt:
         _print_goodbye()
-

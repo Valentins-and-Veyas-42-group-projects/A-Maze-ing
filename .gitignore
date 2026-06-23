@@ -34,3 +34,15 @@ pip-wheel-metadata/
 en.subject.pdf
 output.txt
 *.lock
+
+# Allow wheels and tarballs at the root for distribution
+!mazegen-*.whl
+!mazegen-*.tar.gz
+
+# Reusability testing directories and files
+/test_env/
+/test_venv/
+/test_reusability/
+/test_install/
+/test_reusable.py
+/test_install.py

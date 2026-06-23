@@ -28,6 +28,7 @@ class MazeGenerator:
         entry: tuple[int, int],
         exit: tuple[int, int],
         perfect: bool,
+        seed: str | int | None = None,
     ) -> None:
         """Initialize the generator with dimensions and endpoints."""
 
@@ -39,6 +40,9 @@ class MazeGenerator:
         self.perfect = perfect
         self.logo_cells: list[Cell] = []
         self.cursor: Cell | None = None
+        self.seed = seed
+        if seed is not None:
+            random.seed(seed)
 
     def init_grid(self, value: int) -> Grid:
         """Build a grid with all walls intact and return it."""

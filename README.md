@@ -79,8 +79,9 @@ python3 a_maze_ing.py config.txt
 
 | Target | Description |
 |---|---|
+| `make build` / `make build-package` | Build the wheel and source distribution packages and copy them to the root |
 | `make debug` | Run with pdb debugger |
-| `make clean` | Remove `__pycache__`, `.mypy_cache`, etc. |
+| `make clean` | Remove build artifacts, root package files, `__pycache__`, etc. |
 | `make lint` | Run flake8 + mypy |
 | `make lint-strict` | Run flake8 + mypy --strict |
 | `make typecheck` | Run mypy, ty, and pyright |
@@ -121,18 +122,25 @@ The config file uses `KEY = VALUE` pairs, one per line. Lines starting with `#` 
 
 The maze generator is packaged as a standalone, pip-installable module called `mazegen`.
 
-### Build the Package from Source
+### Build and Install the Package
 
+To build the wheel and source distribution package and place them at the root of the repository:
 ```bash
-pip install build
-python -m build
+make build-package
 ```
-This produces `mazegen-*.whl` and `mazegen-*.tar.gz` in the `dist/` directory.
+This runs the standard python/uv build and copies the resulting package files to the root directory:
+- `mazegen-1.0.0-py3-none-any.whl` (pip-installable wheel package)
+- `mazegen-1.0.0.tar.gz` (pip-installable source distribution)
 
-### Install the Package
-
+You can also run:
 ```bash
-pip install dist/mazegen-*.whl
+make install
+```
+which builds the package and performs editable installation with all dev tools.
+
+To install the wheel package from the root of the repository via pip:
+```bash
+pip install mazegen-1.0.0-py3-none-any.whl
 ```
 
 ### Basic Usage
@@ -142,8 +150,15 @@ Below is a basic example of using the module programmatically to generate and so
 ```python
 from mazegen import MazeGenerator, Ok, Err
 
-# Initialize the generator (dimensions, entry, exit, perfect/imperfect mode)
-gen = MazeGenerator(width=20, height=15, entry=(0, 0), exit=(19, 14), perfect=True)
+# Initialize the generator with size (width/height), entry/exit, perfect/imperfect mode, and custom seed
+gen = MazeGenerator(
+    width=20,
+    height=15,
+    entry=(0, 0),
+    exit=(19, 14),
+    perfect=True,
+    seed="my_custom_seed_value"  # Seed can be string or integer (optional)
+)
 
 # Generate using one of the algorithms (returns Ok[None] or Err[MazeError])
 result = gen.generate()  # Randomized DFS
@@ -152,7 +167,10 @@ result = gen.generate()  # Randomized DFS
 # result = gen.prims_algorithm()  # Prim's Algorithm
 
 if isinstance(result, Ok):
-    grid = gen.grid          # list[list[int]]: a 2D grid representing cell wall states
+    # Access the generated structure directly:
+    grid = gen.grid          # list[list[int]]: a 2D grid representing cell wall states (4-bit encoding)
+    
+    # Access the solution path:
     solution = gen.solver()  # Returns Ok(path_string) (e.g., "NESW...") or Err(MazeError)
     
     if isinstance(solution, Ok):
