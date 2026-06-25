@@ -39,6 +39,7 @@ class MazeGenerator:
         self.exits = exit
         self.perfect = perfect
         self.logo_cells: list[Cell] = []
+        self.logo_warning: str = ""
         self.cursor: Cell | None = None
         self.seed = seed
         if seed is not None:
@@ -136,9 +137,9 @@ class MazeGenerator:
         logo_cells = pattern.placed_cells(self.width, self.height)
 
         if not pattern.fits(self.width, self.height):
-            print("Maze too small for logo")
+            self.logo_warning = "Maze too small for logo"
         elif self.entry in logo_cells or self.exits in logo_cells:
-            print("Entry/Exit would be in Logo")
+            self.logo_warning = "Entry/Exit would be in Logo"
         else:
             self.logo_cells = self.add_42(pattern)
         logo = set(self.logo_cells)
@@ -184,9 +185,9 @@ class MazeGenerator:
         logo_cells = pattern.placed_cells(self.width, self.height)
 
         if not pattern.fits(self.width, self.height):
-            print("Maze too small for logo")
+            self.logo_warning = "Maze too small for logo"
         elif self.entry in logo_cells or self.exits in logo_cells:
-            print("Entry/Exit would be in Logo")
+            self.logo_warning = "Entry/Exit would be in Logo"
         else:
             self.logo_cells = self.add_42(pattern)
         stack: list[tuple[int, int]] = [self.entry]
@@ -236,9 +237,9 @@ class MazeGenerator:
         logo_cells = pattern.placed_cells(self.width, self.height)
 
         if not pattern.fits(self.width, self.height):
-            print("Maze too small for logo")
+            self.logo_warning = "Maze too small for logo"
         elif self.entry in logo_cells or self.exits in logo_cells:
-            print("Entry/Exit would be in Logo")
+            self.logo_warning = "Entry/Exit would be in Logo"
         else:
             self.logo_cells = self.add_42(pattern)
         visited[self.entry[1]][self.entry[0]] = True

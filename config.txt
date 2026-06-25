@@ -1,5 +1,5 @@
-WIDTH = 70
-HEIGHT =50
+WIDTH = 30
+HEIGHT = 30
 OUTPUT_FILE = maze.txt
 PERFECT = False
 ANIMATION = True
@@ -8,4 +8,4 @@ SEED = demo
 SHOW_PATH = True
 SPEED = 6
 ENTRY = 0,0
-EXIT = 67,49
+EXIT = 12,28

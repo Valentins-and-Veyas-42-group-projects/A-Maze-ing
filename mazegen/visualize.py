@@ -8,7 +8,7 @@ from .canvas import PALETTE, WALL, apply_path_step, build_canvas, rgb_to_curses
 from .errors import Err
 from .generator import MazeGenerator
 from .output import save_output
-from .shared import DIRECTION_DELTAS, LETTER_TO_DIRECTION, Cell
+from .shared import Cell, DIRECTION_DELTAS, LETTER_TO_DIRECTION
 from .solver import path_to_edges, solve, solve_dfs, validate_path
 
 
@@ -21,23 +21,10 @@ def setup_colors() -> None:
     """
     curses.start_color()
     curses.use_default_colors()
-
-    can_change = curses.can_change_color()
-
     for k, v in PALETTE.items():
-        if can_change:
-            conv = rgb_to_curses(v)
-            try:
-                curses.init_color(k, *conv)
-            except curses.error:
-                # Fallback if init_color fails despite can_change_color()
-                pass
-
-        try:
-            curses.init_pair(k, -1, k)
-        except curses.error:
-            # Some terminals might have very few color pairs
-            pass
+        conv = rgb_to_curses(v)
+        curses.init_color(k, *conv)
+        curses.init_pair(k, -1, k)
 
 
 def blit(stdscr: curses.window, canvas: list[list[int]]) -> None:
@@ -70,8 +57,7 @@ def blit(stdscr: curses.window, canvas: list[list[int]]) -> None:
                 run += 1
             try:
                 stdscr.addstr(
-                    screen_y,
-                    pad_x + sx * 2,
+                    screen_y, pad_x + sx * 2,
                     "  " * run,
                     curses.color_pair(code),
                 )
@@ -90,9 +76,7 @@ def path_anim(
     avoiding a full canvas rebuild on every frame.
     """
     canvas = build_canvas(
-        mazegen.grid,
-        mazegen.entry,
-        mazegen.exits,
+        mazegen.grid, mazegen.entry, mazegen.exits,
         set(mazegen.logo_cells),
     )
     x, y = mazegen.entry
@@ -140,7 +124,7 @@ def runviewer(
         mazegen = make_mazegen()
         step_count = 0
 
-        def on_step(mazegen: MazeGenerator = mazegen) -> None:
+        def on_step() -> None:
             nonlocal step_count, speed_skip
             step_count += 1
             if step_count % speed_skip != 0:
@@ -148,30 +132,22 @@ def runviewer(
             stdscr.nodelay(True)
             key = stdscr.getch()
             stdscr.nodelay(False)
-            if key == ord("."):
+            if key == ord('.'):
                 speed_skip = min(256, speed_skip + 1)
-            elif key == ord(","):
+            elif key == ord(','):
                 speed_skip = max(1, speed_skip - 1)
             stdscr.erase()
             anim_canvas = build_canvas(
-                mazegen.grid,
-                mazegen.entry,
-                mazegen.exits,
-                None,
-                mazegen.cursor,
-                None,
-                None,
-                True,
+                mazegen.grid, mazegen.entry, mazegen.exits, None,
+                mazegen.cursor, None, None, True,
             )
             blit(stdscr, anim_canvas)
             height, width = stdscr.getmaxyx()
             hint = f"[,] slower  [.] faster  (speed: {speed_skip})"
             try:
                 stdscr.addstr(
-                    height - 1,
-                    max(0, round(width / 2) - len(hint) // 2),
-                    hint,
-                    curses.A_BOLD,
+                    height - 1, max(0, round(width / 2) - len(hint) // 2),
+                    hint, curses.A_BOLD,
                 )
             except curses.error:
                 pass
@@ -181,20 +157,17 @@ def runviewer(
             gen_result = mazegen.generate(on_step if animation else None)
         elif alge == 3:
             gen_result = mazegen.prims_algorithm(
-                on_step if animation else None
-            )
+                on_step if animation else None)
         else:
             gen_result = mazegen.bin_tree(on_step if animation else None)
 
         if isinstance(gen_result, Err):
-            raise RuntimeError(f"Generation failed: {gen_result.error_name}")
+            return
 
         solve_step_count = 0
 
         def solve_on_step(
-            visited: set[Cell],
-            frontier: set[Cell],
-            mazegen: MazeGenerator = mazegen,
+            visited: set[Cell], frontier: set[Cell]
         ) -> None:
             nonlocal solve_step_count, speed_skip
             solve_step_count += 1
@@ -203,32 +176,23 @@ def runviewer(
             stdscr.nodelay(True)
             key = stdscr.getch()
             stdscr.nodelay(False)
-            if key == ord("."):
+            if key == ord('.'):
                 speed_skip = min(256, speed_skip + 1)
-            elif key == ord(","):
+            elif key == ord(','):
                 speed_skip = max(1, speed_skip - 1)
             stdscr.erase()
             solve_canvas = build_canvas(
-                mazegen.grid,
-                mazegen.entry,
-                mazegen.exits,
-                set(mazegen.logo_cells),
-                None,
-                None,
-                None,
-                False,
-                visited,
-                frontier,
+                mazegen.grid, mazegen.entry, mazegen.exits,
+                set(mazegen.logo_cells), None, None, None,
+                False, visited, frontier,
             )
             blit(stdscr, solve_canvas)
             height, width = stdscr.getmaxyx()
             hint = f"[,] slower  [.] faster  (speed: {speed_skip})"
             try:
                 stdscr.addstr(
-                    height - 1,
-                    max(0, round(width / 2) - len(hint) // 2),
-                    hint,
-                    curses.A_BOLD,
+                    height - 1, max(0, round(width / 2) - len(hint) // 2),
+                    hint, curses.A_BOLD,
                 )
             except curses.error:
                 pass
@@ -236,102 +200,95 @@ def runviewer(
 
         active_solver = solve_dfs if use_dfs else solve
         solve_result = active_solver(
-            mazegen.grid,
-            mazegen.entry,
-            mazegen.exits,
+            mazegen.grid, mazegen.entry, mazegen.exits,
             solve_on_step if solver_anim else None,
         )
         if isinstance(solve_result, Err):
-            raise RuntimeError(f"Solver failed: {solve_result.error_name}")
+            return
 
         path = solve_result.value
         validation = validate_path(
-            mazegen.grid, path, mazegen.entry, mazegen.exits
-        )
+            mazegen.grid, path, mazegen.entry, mazegen.exits)
         if isinstance(validation, Err):
-            raise RuntimeError(
-                f"Path validation failed: {validation.error_name}"
-            )
+            return
         path_cells, path_edges = path_to_edges(path, mazegen.entry)
 
         while True:
             stdscr.erase()
             if not show_path:
                 canvas = build_canvas(
-                    mazegen.grid,
-                    mazegen.entry,
-                    mazegen.exits,
+                    mazegen.grid, mazegen.entry, mazegen.exits,
                     set(mazegen.logo_cells),
                 )
             else:
                 canvas = build_canvas(
-                    mazegen.grid,
-                    mazegen.entry,
-                    mazegen.exits,
-                    set(mazegen.logo_cells),
-                    None,
-                    path_cells,
-                    path_edges,
+                    mazegen.grid, mazegen.entry, mazegen.exits,
+                    set(mazegen.logo_cells), None,
+                    path_cells, path_edges,
                 )
             blit(stdscr, canvas)
             height, width = stdscr.getmaxyx()
             alg_label = "DFS" if use_dfs else "BFS"
             hint = (
-                f"[p] path  [r] regen  [s] save  [a] anim"
+                f"[p] path  [r] regen  [s] save  [a] anim "
+                f"[c] change wall color"
                 f"  [d] solver:{alg_label}  [,/.] speed  [q] quit"
             )
             try:
                 stdscr.addstr(
-                    height - 1,
-                    max(0, round(width / 2) - len(hint) // 2),
+                    height - 1, max(0, round(width / 2) - len(hint) // 2),
                     hint,
                     curses.A_BOLD,
                 )
             except curses.error:
                 pass
+            if mazegen.logo_warning:
+                try:
+                    warn = mazegen.logo_warning
+                    stdscr.addstr(
+                        height - 2,
+                        max(0, round(width / 2) - len(warn) // 2),
+                        warn,
+                        curses.A_BOLD,
+                    )
+                except curses.error:
+                    pass
             stdscr.refresh()
             match stdscr.getch():
-                case q if q == ord("q"):
+                case q if q == ord('q'):
                     return
-                case p if p == ord("p"):
+                case p if p == ord('p'):
                     show_path = not show_path
-                case r if r == ord("r"):
+                case r if r == ord('r'):
                     break
-                case a if a == ord("a"):
+                case a if a == ord('a'):
                     active_solver = solve_dfs if use_dfs else solve
                     solve_result = active_solver(
-                        mazegen.grid,
-                        mazegen.entry,
-                        mazegen.exits,
+                        mazegen.grid, mazegen.entry, mazegen.exits,
                         solve_on_step,
                     )
                     path_anim(stdscr, mazegen, path)
-                case d if d == ord("d"):
+                case d if d == ord('d'):
                     use_dfs = not use_dfs
                     active_solver = solve_dfs if use_dfs else solve
                     solve_result = active_solver(
-                        mazegen.grid,
-                        mazegen.entry,
-                        mazegen.exits,
+                        mazegen.grid, mazegen.entry, mazegen.exits,
                     )
                     if isinstance(solve_result, Err):
                         continue
                     path = solve_result.value
-                    path_cells, path_edges = path_to_edges(path, mazegen.entry)
-                case dot if dot == ord("."):
+                    path_cells, path_edges = path_to_edges(
+                        path, mazegen.entry)
+                case dot if dot == ord('.'):
                     speed_skip = min(256, speed_skip + 1)
-                case comma if comma == ord(","):
+                case comma if comma == ord(','):
                     speed_skip = max(1, speed_skip - 1)
-                case s if s == ord("s"):
+                case s if s == ord('s'):
                     save_output(mazegen, output_file)
-                case c if c == ord("c"):
-                    if curses.can_change_color():
-                        col: tuple[int, int, int] = (
-                            random.randint(0, 255),
-                            random.randint(0, 255),
-                            random.randint(0, 255),
-                        )
-                        try:
-                            curses.init_color(WALL, *rgb_to_curses(col))
-                        except curses.error:
-                            pass
+                case c if c == ord('c'):
+                    col: tuple[int, int, int] = (
+                        random.randint(0, 255),
+                        random.randint(0, 255),
+                        random.randint(0, 255),
+                    )
+                    curses.init_color(WALL, *rgb_to_curses(col))
